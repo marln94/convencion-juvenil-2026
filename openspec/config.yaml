@@ -1,0 +1,42 @@
+schema: spec-driven
+
+context: |
+  Sistema de inscripción y control de asistentes para la Convención Anual de la iglesia
+  (hasta 800 personas): registro online e in situ, revisión manual de comprobantes de pago
+  por transferencia bancaria, asignación aleatoria a 13 equipos identificados por colores
+  y check-in de llegada mediante código QR.
+
+  Tech stack (TypeScript en toda la pila, monorepo pnpm workspaces):
+    - Frontend: React + Vite + Tailwind. apps/admin (panel de administración) y
+      apps/campo (PWA para el staff, con escaneo QR y tolerancia offline).
+    - Backend: Node.js + TypeScript en Lambda, enrutado con Hono.
+    - Base de datos: DynamoDB on-demand. Tablas: Participantes y Configuracion.
+    - Infraestructura: AWS CDK (TypeScript). S3 + CloudFront (frontend), API Gateway
+      (Lambdas), Cognito (login admin/staff), SES (correos), S3 privado (comprobantes).
+    - Compartido: packages/shared-types (modelo y DTOs) y packages/api-client
+      (cliente HTTP tipado) usados por apps y handlers.
+
+  Convenciones:
+    - Textos de interfaz en español.
+    - Commits en estilo conventional commits.
+    - No hay pasarela de pago: el pago se hace por transferencia y la revisión de
+      comprobantes es manual por el equipo organizador.
+    - El QR de cada participante codifica su participantId.
+
+rules:
+  proposal:
+    - Incluir una sección de "Non-goals" y una de "Contexto".
+  tasks:
+    - Desglosar tareas en bloques de máximo 2-3 horas.
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
