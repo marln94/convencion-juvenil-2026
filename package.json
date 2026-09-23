@@ -4,12 +4,19 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "build": "pnpm -r run build",
     "typecheck": "pnpm -r run typecheck",
-    "clean": "pnpm -r run clean"
+    "clean": "pnpm -r run clean",
+    "dev:registro": "pnpm --filter @convencion/registro dev",
+    "build:registro": "pnpm --filter @convencion/registro build"
   }
 }

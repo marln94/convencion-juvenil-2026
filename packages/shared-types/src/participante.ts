@@ -6,6 +6,7 @@ export interface Participante {
   participantId: string
   nombre: string
   contacto: string
+  correo?: string
   esRegistroPorEncargado: boolean
   encargadoNombre?: string
   encargadoContacto?: string

@@ -1,6 +1,6 @@
 packages:
   - "packages/*"
   - "services/*"
-  # Dirs futuros (se agregan al iniciar cada módulo):
-  # - "apps/*"
+  - "apps/*"
+  # Dir futuro (se agrega al iniciar la infraestructura):
   # - "infra/cdk"

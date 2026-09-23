@@ -3,6 +3,7 @@ import type { Participante, TipoRegistro } from './participante.js'
 export interface RegistrarParticipanteInput {
   nombre: string
   contacto: string
+  correo?: string
   esRegistroPorEncargado?: boolean
   encargadoNombre?: string
   encargadoContacto?: string
@@ -16,6 +17,18 @@ export interface RegistrarParticipanteInput {
 export interface RegistrarParticipanteOutput {
   participante: Participante
   codigoQr: string
+}
+
+export interface SolicitarComprobanteUploadInput {
+  contentType: string
+  nombreArchivo?: string
+}
+
+export interface SolicitarComprobanteUploadOutput {
+  uploadUrl: string
+  s3Key: string
+  contentType: string
+  expiraEnSegundos: number
 }
 
 export interface RevisarPagoInput {
