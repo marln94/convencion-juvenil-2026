@@ -19,7 +19,7 @@ participante.
 
 #### Scenario: Registro online exitoso
 
-- **WHEN** se envía un registro con `tipoRegistro = online`, nombre, contacto, correo válido y `comprobante.s3Key` válido
+- **WHEN** se envía un registro con `tipoRegistro = online`, nombre y apellido (sin números), contacto (correo válido o teléfono `8877-9955`), correo válido y `comprobante.s3Key` válido
 - **THEN** el sistema crea el participante con `estadoPago = pendiente` y `tipoRegistro = online`
 - **AND** el sistema genera un `participantId` único y lo devuelve en la respuesta con `codigoQr`
 - **AND** el participante queda recuperable por su `participantId`
@@ -34,7 +34,9 @@ participante.
 Cuando el participante es inscrito por un encargado (por ejemplo un padre inscribiendo a su
 hijo), el sistema SHALL capturar los datos del participante y los del encargado, y SHALL
 devolverlos vinculados en el mismo registro para identificar quién responde por el
-participante durante el evento.
+participante durante el evento. Los datos del encargado SHALL validarse con las mismas
+reglas que los del participante: `encargadoNombre` sin números y con al menos dos palabras,
+y `encargadoContacto` como correo válido o teléfono `8877-9955`.
 
 #### Scenario: Registro realizado por un encargado
 
@@ -46,6 +48,16 @@ participante durante el evento.
 
 - **WHEN** se envía un registro con `esRegistroPorEncargado = true` sin `encargadoNombre` o sin `encargadoContacto`
 - **THEN** el sistema rechaza la solicitud con un error 400 indicando que los datos del encargado son obligatorios
+
+#### Scenario: Registro con nombre del encargado inválido
+
+- **WHEN** el `encargadoNombre` contiene números o no incluye nombre y apellido
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el nombre del encargado no puede contener números o debe incluir nombre y apellido
+
+#### Scenario: Registro con contacto del encargado inválido
+
+- **WHEN** el `encargadoContacto` no es un teléfono con formato `8877-9955` ni un correo válido
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto del encargado debe ser un teléfono 8877-9955 o un correo válido
 
 ### Requirement: Generación del código QR al finalizar el registro
 
@@ -125,6 +137,21 @@ cualquier solicitud incompleta o inválida, devolviendo un mensaje que indique e
 
 - **WHEN** se envía un registro sin contacto
 - **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto es obligatorio
+
+#### Scenario: Registro con contacto que no es teléfono 8877-9955 ni correo
+
+- **WHEN** se envía un registro cuyo contacto no es un teléfono con formato `8877-9955` ni un correo válido
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto debe ser un teléfono 8877-9955 o un correo válido
+
+#### Scenario: Registro con nombre que contiene números
+
+- **WHEN** se envía un registro cuyo nombre contiene números
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el nombre no puede contener números
+
+#### Scenario: Registro con nombre sin apellido
+
+- **WHEN** se envía un registro cuyo nombre no incluye al menos dos palabras separadas por espacio (nombre y apellido)
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el nombre debe incluir nombre y apellido
 
 #### Scenario: Registro con tipo de registro inválido
 

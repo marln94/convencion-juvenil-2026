@@ -28,7 +28,7 @@ async function post(path: string, body: unknown): Promise<Response> {
 
 const onlineValido = {
   nombre: 'Ana Pérez',
-  contacto: '+54 111 222 3333',
+  contacto: '1122-3344',
   correo: 'ana@example.com',
   tipoRegistro: 'online',
   comprobante: { contentType: 'image/png', s3Key: 'comprobantes/anita.png' }
@@ -74,7 +74,7 @@ describe('POST /inscripciones (online)', () => {
 describe('POST /inscripciones (in situ)', () => {
   it('registra in situ con estado pagado sin comprobante', async () => {
     const res = await post('/inscripciones', {
-      nombre: 'Leo',
+      nombre: 'Leo García',
       contacto: 'leo@example.com',
       tipoRegistro: 'in_situ'
     })
@@ -92,13 +92,13 @@ describe('registro por encargado', () => {
     const res = await post('/inscripciones', {
       ...onlineValido,
       esRegistroPorEncargado: true,
-      encargadoNombre: 'María',
+      encargadoNombre: 'María López',
       encargadoContacto: 'maria@example.com'
     })
     const body = (await res.json()) as RegistrarParticipanteOutput
 
     expect(res.status).toBe(201)
-    expect(body.participante.encargadoNombre).toBe('María')
+    expect(body.participante.encargadoNombre).toBe('María López')
     expect(body.participante.encargadoContacto).toBe('maria@example.com')
   })
 
@@ -106,7 +106,7 @@ describe('registro por encargado', () => {
     const res = await post('/inscripciones', {
       ...onlineValido,
       esRegistroPorEncargado: true,
-      encargadoNombre: 'María'
+      encargadoNombre: 'María López'
     })
 
     expect(res.status).toBe(400)

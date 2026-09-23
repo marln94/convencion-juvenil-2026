@@ -17,6 +17,8 @@
     "typecheck": "pnpm -r run typecheck",
     "clean": "pnpm -r run clean",
     "dev:registro": "pnpm --filter @convencion/registro dev",
-    "build:registro": "pnpm --filter @convencion/registro build"
+    "build:registro": "pnpm --filter @convencion/registro build",
+    "dev:api": "pnpm --filter @convencion/api dev:api",
+    "setup:local": "pnpm --filter @convencion/api local-setup"
   }
 }

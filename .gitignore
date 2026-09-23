@@ -3,5 +3,6 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .env
+.env.local
 coverage/
 cdk.out/

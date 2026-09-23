@@ -111,3 +111,33 @@
       `pnpm --filter @convencion/api test` en verde, y commitear el avance del change.
       **Verificación**: los tres comandos terminan sin errores y `git log` muestra el
       commit del cambio.
+
+## 8. Validaciones de formato
+
+- [x] 8.1 Ajustar el esquema de validación del backend: `nombre` sin números, al menos dos
+      palabras (nombre y apellido), y `contacto` (participante y encargado) que se valide
+      como correo si contiene `@` o como teléfono con formato `8877-9955` (`xxxx-xxxx`) en
+      caso contrario; mensajes de error en español por regla (que no queden tapados por el
+      genérico).
+      **Verificación**: `pnpm --filter @convencion/api test` pasa con los casos nuevos
+      (7/9 dígitos, sin guion, separadores inválidos, nombre numérico, nombre sin apellido,
+      encargado inválido, etc.).
+- [x] 8.2 Espejar las mismas reglas en la validación visible del formulario para nombre,
+      contacto, encargadoNombre y encargadoContacto (incluido el requisito de nombre y
+      apellido), y actualizar el placeholder del campo contacto a `8877-9955 o correo@gmail.com`.
+      **Verificación**: `pnpm --filter @convencion/registro build` compila.
+- [x] 8.3 Mostrar los errores junto al campo que falla y actualizarlos en tiempo real
+      mientras el usuario corrige, y limpiarlos al volver a pasos anteriores.
+      **Verificación**: `pnpm --filter @convencion/registro build` compila.
+- [x] 8.4 Hacer el formulario responsive y mobile friendly (inputs y botones con toque
+      grande, acciones a ancho completo en pantallas angostas, QR que escala).
+      **Verificación**: `pnpm --filter @convencion/registro build` compila.
+- [x] 8.5 Reemplazar la opción de imprimir en la pantalla final por "Guardar/Compartir":
+      abre el diálogo nativo de compartir (Web Share) si está disponible y, si no, copia el
+      identificador al portapapeles con confirmación.
+      **Verificación**: `pnpm --filter @convencion/registro build` compila.
+- [x] 8.6 Actualizar las specs (registro y formulario-registro), el contrato y los escenarios:
+      contacto inválido, nombre con números, nombre sin apellido, datos del encargado
+      inválidos, validación en tiempo real, reset de errores al volver, Guardar/Compartir y
+      diseño responsive.
+      **Verificación**: las specs listan los escenarios nuevos.

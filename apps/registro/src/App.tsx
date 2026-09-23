@@ -29,20 +29,35 @@ const DATOS_INICIALES: DatosFormulario = {
 
 const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const CAMPOS_FORMULARIO: (keyof DatosFormulario)[] = [
+  'nombre',
+  'contacto',
+  'correo',
+  'encargadoNombre',
+  'encargadoContacto'
+]
+
+type CamposTocados = Partial<Record<keyof DatosFormulario, boolean>>
+type ErroresFormulario = Partial<Record<keyof DatosFormulario, string>>
+
 function Campo({
   etiqueta,
   valor,
   onChange,
+  onBlur,
   requerido = false,
   tipo = 'text',
-  placeholder
+  placeholder,
+  error
 }: {
   etiqueta: string
   valor: string
   onChange: (valor: string) => void
+  onBlur?: () => void
   requerido?: boolean
   tipo?: string
   placeholder?: string
+  error?: string
 }) {
   return (
     <label className="block">
@@ -50,13 +65,25 @@ function Campo({
         {etiqueta}
         {requerido && <span className="text-red-500"> *</span>}
       </span>
-      <input
-        type={tipo}
-        value={valor}
-        placeholder={placeholder}
-        onChange={(evento) => onChange(evento.target.value)}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-      />
+<input
+              type={tipo}
+              value={valor}
+              placeholder={placeholder}
+              onChange={(evento) => onChange(evento.target.value)}
+              onBlur={onBlur}
+              aria-invalid={Boolean(error)}
+              className={
+                'mt-1 w-full min-h-11 rounded-lg border px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-1 ' +
+                (error
+                  ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
+                  : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500')
+              }
+            />
+      {error && (
+        <span role="alert" className="mt-1 block text-sm text-red-600">
+          {error}
+        </span>
+      )}
     </label>
   )
 }
@@ -80,7 +107,7 @@ function Boton({
       onClick={onClick}
       disabled={deshabilitado}
       className={
-        'rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ' +
+        'min-h-11 w-full whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors sm:w-auto ' +
         (principal
           ? 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300'
           : 'border border-slate-300 text-slate-700 hover:bg-slate-50')
@@ -104,7 +131,7 @@ export function App() {
   const [esEncargado, setEsEncargado] = useState(false)
 
   const [datos, setDatos] = useState<DatosFormulario>(DATOS_INICIALES)
-  const [erroresFormulario, setErroresFormulario] = useState<string[]>([])
+  const [tocados, setTocados] = useState<CamposTocados>({})
 
   const [archivo, setArchivo] = useState<File | null>(null)
   const [adjunto, setAdjunto] = useState<{ s3Key: string; contentType: string } | null>(null)
@@ -114,44 +141,131 @@ export function App() {
   const [errorApi, setErrorApi] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<RegistrarParticipanteOutput | null>(null)
-
-  const actualizar = (campo: keyof DatosFormulario) => (valor: string) => {
-    setDatos((actuales) => ({ ...actuales, [campo]: valor }))
-  }
+  const [copiado, setCopiado] = useState(false)
 
   const iniciar = (comoEncargado: boolean) => {
     setEsEncargado(comoEncargado)
     setPaso('datos')
   }
 
-  const validarFormulario = useCallback((): string[] => {
-    const errores: string[] = []
-    if (!datos.nombre.trim()) {
-      errores.push('El nombre es obligatorio')
-    }
-    if (!datos.contacto.trim()) {
-      errores.push('El contacto es obligatorio')
-    }
-    if (datos.correo.trim() && !PATRON_CORREO.test(datos.correo.trim())) {
-      errores.push('El correo no tiene un formato válido')
-    }
-    if (esEncargado) {
-      if (!datos.encargadoNombre.trim()) {
-        errores.push('El nombre del encargado es obligatorio')
+  const tocar = (campo: keyof DatosFormulario) => {
+    setTocados((actuales) => (actuales[campo] ? actuales : { ...actuales, [campo]: true }))
+  }
+
+  const resetErrores = () => {
+    setTocados({})
+  }
+
+  const validarCampo = useCallback(
+    (campo: keyof DatosFormulario): string | undefined => {
+      const valor = datos[campo].trim()
+      switch (campo) {
+        case 'nombre':
+          if (!valor) {
+            return 'El nombre es obligatorio'
+          }
+          if (/\d/.test(valor)) {
+            return 'El nombre no puede contener números'
+          }
+          if (valor.split(/\s+/).length < 2) {
+            return 'El nombre debe incluir nombre y apellido'
+          }
+          return undefined
+        case 'contacto':
+          if (!valor) {
+            return 'El contacto es obligatorio'
+          }
+          if (valor.includes('@') ? !PATRON_CORREO.test(valor) : !/^\d{4}-\d{4}$/.test(valor)) {
+            return 'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+          }
+          return undefined
+        case 'correo':
+          if (valor && !PATRON_CORREO.test(valor)) {
+            return 'El correo no tiene un formato válido'
+          }
+          return undefined
+        case 'encargadoNombre':
+          if (!esEncargado) {
+            return undefined
+          }
+          if (!valor) {
+            return 'El nombre del encargado es obligatorio'
+          }
+          if (/\d/.test(valor)) {
+            return 'El nombre del encargado no puede contener números'
+          }
+          if (valor.split(/\s+/).length < 2) {
+            return 'El nombre del encargado debe incluir nombre y apellido'
+          }
+          return undefined
+        case 'encargadoContacto':
+          if (!esEncargado) {
+            return undefined
+          }
+          if (!valor) {
+            return 'El contacto del encargado es obligatorio'
+          }
+          if (
+            valor.includes('@')
+              ? !PATRON_CORREO.test(valor)
+              : !/^\d{4}-\d{4}$/.test(valor)
+          ) {
+            return 'El contacto del encargado debe ser un teléfono 8877-9955 o un correo válido'
+          }
+          return undefined
       }
-      if (!datos.encargadoContacto.trim()) {
-        errores.push('El contacto del encargado es obligatorio')
+    },
+    [datos, esEncargado]
+  )
+
+  const validarFormulario = useCallback((): ErroresFormulario => {
+    const errores: ErroresFormulario = {}
+    for (const campo of CAMPOS_FORMULARIO) {
+      const error = validarCampo(campo)
+      if (error) {
+        errores[campo] = error
       }
     }
     return errores
-  }, [datos, esEncargado])
+  }, [validarCampo])
+
+  const actualizar = (campo: keyof DatosFormulario) => (valor: string) => {
+    setDatos((actuales) => ({ ...actuales, [campo]: valor }))
+    tocar(campo)
+  }
+
+  const errorDe = (campo: keyof DatosFormulario): string | undefined =>
+    tocados[campo] ? validarCampo(campo) : undefined
 
   const pasarAComprobante = (evento: FormEvent) => {
     evento.preventDefault()
-    const errores = validarFormulario()
-    setErroresFormulario(errores)
-    if (errores.length === 0) {
+    setTocados(Object.fromEntries(CAMPOS_FORMULARIO.map((campo) => [campo, true])))
+    if (Object.keys(validarFormulario()).length === 0) {
       setPaso('comprobante')
+    }
+  }
+
+  const compartirResultado = async () => {
+    if (!resultado) {
+      return
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: NOMBRE_CONVENCION,
+          text: `Mi identificador de inscripción: ${resultado.codigoQr}`
+        })
+      } catch {
+        // el usuario canceló el diálogo de compartir; no hacemos nada
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(resultado.codigoQr)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      // sin soporte de portapapeles en este navegador
     }
   }
 
@@ -227,9 +341,9 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
         {paso === 'inicio' && (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">¿Quién se inscribe?</h2>
             <p className="mt-1 text-sm text-slate-500">Elegí cómo querés completar la inscripción.</p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -254,7 +368,7 @@ export function App() {
         )}
 
         {paso === 'datos' && (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">Datos del formulario</h2>
             <p className="mt-1 text-sm text-slate-500">
               {esEncargado
@@ -262,29 +376,21 @@ export function App() {
                 : 'Completá tus datos de contacto.'}
             </p>
 
-            {erroresFormulario.length > 0 && (
-              <div className="mt-4 space-y-1">
-                {erroresFormulario.map((error) => (
-                  <Alerta key={error} mensaje={error} />
-                ))}
-              </div>
-            )}
-
             <form onSubmit={pasarAComprobante} className="mt-5 space-y-4 no-print">
-              <Campo etiqueta="Nombre" valor={datos.nombre} onChange={actualizar('nombre')} requerido placeholder="Nombre y apellido" />
-              <Campo etiqueta="Contacto" valor={datos.contacto} onChange={actualizar('contacto')} requerido placeholder="Teléfono o correo" />
-              <Campo etiqueta="Correo (opcional)" valor={datos.correo} onChange={actualizar('correo')} tipo="email" placeholder="para recibir novedades" />
+              <Campo etiqueta="Nombre" valor={datos.nombre} onChange={actualizar('nombre')} onBlur={() => tocar('nombre')} requerido placeholder="Nombre y apellido" error={errorDe('nombre')} />
+              <Campo etiqueta="Contacto" valor={datos.contacto} onChange={actualizar('contacto')} onBlur={() => tocar('contacto')} requerido placeholder="8877-9955 o correo@gmail.com" error={errorDe('contacto')} />
+              <Campo etiqueta="Correo (opcional)" valor={datos.correo} onChange={actualizar('correo')} onBlur={() => tocar('correo')} tipo="email" placeholder="para recibir novedades" error={errorDe('correo')} />
               {esEncargado && (
                 <>
                   <div className="border-t border-slate-200 pt-4">
                     <p className="text-sm font-medium text-slate-700">Datos del encargado</p>
                   </div>
-                  <Campo etiqueta="Nombre del encargado" valor={datos.encargadoNombre} onChange={actualizar('encargadoNombre')} requerido />
-                  <Campo etiqueta="Contacto del encargado" valor={datos.encargadoContacto} onChange={actualizar('encargadoContacto')} requerido />
+                  <Campo etiqueta="Nombre del encargado" valor={datos.encargadoNombre} onChange={actualizar('encargadoNombre')} onBlur={() => tocar('encargadoNombre')} requerido error={errorDe('encargadoNombre')} />
+                  <Campo etiqueta="Contacto del encargado" valor={datos.encargadoContacto} onChange={actualizar('encargadoContacto')} onBlur={() => tocar('encargadoContacto')} requerido placeholder="8877-9955 o correo@gmail.com" error={errorDe('encargadoContacto')} />
                 </>
               )}
-              <div className="flex justify-end gap-3 pt-2">
-                <Boton onClick={() => setPaso('inicio')}>Volver</Boton>
+              <div className="mt-5 flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <Boton onClick={() => { setPaso('inicio'); resetErrores() }}>Volver</Boton>
                 <Boton tipo="submit" principal>
                   Continuar
                 </Boton>
@@ -294,7 +400,7 @@ export function App() {
         )}
 
         {paso === 'comprobante' && (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">Comprobante de pago</h2>
             <p className="mt-1 text-sm text-slate-500">
               Subí una foto del comprobante de transferencia (PNG/JPG) o el PDF. Ya no vas a
@@ -327,8 +433,8 @@ export function App() {
               </label>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3 no-print">
-              <Boton onClick={() => setPaso('datos')}>Volver</Boton>
+            <div className="mt-6 flex flex-col-reverse gap-3 no-print sm:flex-row sm:justify-end">
+              <Boton onClick={() => { setPaso('datos'); resetErrores() }}>Volver</Boton>
               <Boton principal onClick={enviarRegistro} deshabilitado={!adjunto || subiendo || enviando}>
                 {enviando ? 'Enviando…' : 'Completar inscripción'}
               </Boton>
@@ -337,14 +443,20 @@ export function App() {
         )}
 
         {paso === 'confirmacion' && resultado && (
-          <section className="print-area rounded-2xl bg-white p-6 text-center shadow-sm">
+          <section className="print-area rounded-2xl bg-white p-5 text-center shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">¡Inscripción completada!</h2>
             <p className="mt-1 text-sm text-slate-500">
               Mostrá este código QR en el ingreso a la convención.
             </p>
 
-            <div className="mx-auto mt-6 w-fit rounded-xl border-2 border-slate-200 p-4">
-              <QRCodeSVG value={resultado.codigoQr} size={220} level="M" includeMargin />
+            <div className="mx-auto mt-6 w-full max-w-[220px] rounded-xl border-2 border-slate-200 p-4">
+              <QRCodeSVG
+                value={resultado.codigoQr}
+                size={220}
+                level="M"
+                includeMargin
+                className="h-auto w-full"
+              />
             </div>
 
             <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm">
@@ -357,8 +469,10 @@ export function App() {
               rechaza, se te va a contactar por el medio indicado.
             </div>
 
-            <div className="mt-6 flex justify-center gap-3 no-print">
-              <Boton principal onClick={() => window.print()}>Imprimir / guardar QR</Boton>
+            <div className="mt-6 flex flex-col gap-3 no-print sm:flex-row sm:justify-center">
+              <Boton principal onClick={compartirResultado}>
+                {copiado ? 'Identificador copiado' : 'Guardar/Compartir'}
+              </Boton>
               <Boton onClick={() => window.location.reload()}>Nueva inscripción</Boton>
             </div>
           </section>
