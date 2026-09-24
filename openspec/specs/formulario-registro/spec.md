@@ -111,7 +111,8 @@ registro. El sistema SHALL impedir la subida de tipos no permitidos con un error
 
 Al completar el registro en línea, el sistema SHALL mostrar una pantalla de confirmación
 con el código QR del participante, su `participantId` y una indicación de que el pago
-quedó pendiente de revisión, permitiendo compartir o guardar el identificador.
+quedó pendiente de revisión, y SHALL permitir compartir o guardar el gafete como una
+imagen del código QR.
 
 #### Scenario: Registro online completado
 
@@ -121,9 +122,15 @@ quedó pendiente de revisión, permitiendo compartir o guardar el identificador.
 
 #### Scenario: Guardado o compartición del QR
 
-- **WHEN** el participante quiere llevarse su QR, toca "Guardar/Compartir"
-- **THEN** el sistema abre el diálogo nativo de compartir del dispositivo si está disponible
-- **AND** si no hay soporte para compartir, copia el identificador al portapapeles y confirma la copia en pantalla
+- **WHEN** el participante toca "Guardar/Compartir" y el navegador soporta compartir archivos
+- **THEN** el sistema comparte una imagen PNG del gafete por el diálogo nativo de compartir del dispositivo
+- **AND** la imagen incluye el nombre de la convención, el nombre del participante y el código QR, con el `participantId` en tipografía discreta en la base
+
+#### Scenario: Sin soporte para compartir archivos
+
+- **WHEN** el participante toca "Guardar/Compartir" y el navegador no soporta compartir archivos (p.ej. Firefox en escritorio)
+- **THEN** el sistema descarga la imagen PNG del gafete
+- **AND** no copia el identificador al portapapeles
 
 ### Requirement: Diseño responsive y mobile friendly
 

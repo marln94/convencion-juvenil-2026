@@ -1,11 +1,12 @@
 import type { FormEvent } from 'react'
-import { useCallback, useState } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
+import { useCallback, useRef, useState } from 'react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
 
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
+import { canvasAFile, componerGafete, descargarCanvas, slugDeNombre } from './lib/gafete'
 
 const NOMBRE_CONVENCION = 'Convención Juvenil 2026'
 
@@ -141,7 +142,8 @@ export function App() {
   const [errorApi, setErrorApi] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<RegistrarParticipanteOutput | null>(null)
-  const [copiado, setCopiado] = useState(false)
+  const [descargado, setDescargado] = useState(false)
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const iniciar = (comoEncargado: boolean) => {
     setEsEncargado(comoEncargado)
@@ -246,27 +248,26 @@ export function App() {
   }
 
   const compartirResultado = async () => {
-    if (!resultado) {
+    if (!resultado || !qrCanvasRef.current) {
       return
     }
-    if (navigator.share) {
+    const lienzo = await componerGafete(qrCanvasRef.current, {
+      nombre: resultado.participante.nombre,
+      participantId: resultado.participante.participantId
+    })
+    const nombreArchivo = `gafete-${slugDeNombre(resultado.participante.nombre)}.png`
+    const archivo = await canvasAFile(lienzo, nombreArchivo)
+    if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) {
       try {
-        await navigator.share({
-          title: NOMBRE_CONVENCION,
-          text: `Mi identificador de inscripción: ${resultado.codigoQr}`
-        })
+        await navigator.share({ files: [archivo] })
       } catch {
         // el usuario canceló el diálogo de compartir; no hacemos nada
       }
       return
     }
-    try {
-      await navigator.clipboard.writeText(resultado.codigoQr)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2000)
-    } catch {
-      // sin soporte de portapapeles en este navegador
-    }
+    descargarCanvas(lienzo, nombreArchivo)
+    setDescargado(true)
+    setTimeout(() => setDescargado(false), 2000)
   }
 
   const seleccionarArchivo = async (evento: FormEvent<HTMLInputElement>) => {
@@ -450,13 +451,16 @@ export function App() {
             </p>
 
             <div className="mx-auto mt-6 w-full max-w-[220px] rounded-xl border-2 border-slate-200 p-4">
-              <QRCodeSVG
-                value={resultado.codigoQr}
-                size={220}
-                level="M"
-                includeMargin
-                className="h-auto w-full"
-              />
+              <div className="aspect-square w-full">
+                <QRCodeCanvas
+                  ref={qrCanvasRef}
+                  value={resultado.codigoQr}
+                  size={512}
+                  level="M"
+                  includeMargin
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
             </div>
 
             <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm">
@@ -471,7 +475,7 @@ export function App() {
 
             <div className="mt-6 flex flex-col gap-3 no-print sm:flex-row sm:justify-center">
               <Boton principal onClick={compartirResultado}>
-                {copiado ? 'Identificador copiado' : 'Guardar/Compartir'}
+                {descargado ? 'Gafete descargado' : 'Guardar/Compartir'}
               </Boton>
               <Boton onClick={() => window.location.reload()}>Nueva inscripción</Boton>
             </div>
