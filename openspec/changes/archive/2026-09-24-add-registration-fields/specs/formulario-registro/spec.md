@@ -1,28 +1,6 @@
-# Formulario de registro
+# Spec Delta
 
-## Purpose
-
-Provee el formulario público de inscripción en línea para que el participante o su
-encargado capturen los datos, carguen el comprobante de pago y reciban al instante el
-código QR de su registro.
-
-## Requirements
-
-### Requirement: Elección del tipo de inscripción
-
-El sistema SHALL preguntar al inicio si la persona se está inscribiendo a sí misma o si
-inscribe a alguien más como encargado, y SHALL mostrar los campos correspondientes según
-la respuesta.
-
-#### Scenario: La persona se inscribe a sí misma
-
-- **WHEN** el usuario elige "inscribirse a sí mismo"
-- **THEN** el formulario muestra solo los datos del participante
-
-#### Scenario: La persona inscribe como encargado
-
-- **WHEN** el usuario elige "inscribir como encargado"
-- **THEN** el formulario muestra además los campos de `encargadoNombre` y `encargadoContacto`
+## MODIFIED Requirements
 
 ### Requirement: Captura y validación de datos del formulario
 
@@ -92,27 +70,6 @@ El sistema SHALL solicitar los datos del participante (nombre, contacto opcional
 - **WHEN** el `encargadoNombre` no tiene nombre y apellido o contiene números, o el `encargadoContacto` no es un teléfono `8877-9955` ni un correo válido
 - **THEN** el sistema muestra el error en el campo correspondiente y no envía el registro
 
-### Requirement: Carga del comprobante de pago
-
-El sistema SHALL permitir seleccionar un archivo de imagen (PNG/JPEG) o PDF como
-comprobante de pago, subirlo al almacenamiento mediante la URL firmada y adjuntarlo al
-registro. El sistema SHALL impedir la subida de tipos no permitidos con un error visible.
-
-#### Scenario: Selección de un archivo permitido
-
-- **WHEN** el usuario selecciona un archivo `image/png`, `image/jpeg` o `application/pdf`
-- **THEN** el sistema solicita una URL de subida, sube el archivo y lo asocia al registro en curso
-
-#### Scenario: Selección de un archivo no permitido
-
-- **WHEN** el usuario selecciona un archivo con un tipo distinto de imagen o PDF
-- **THEN** el sistema muestra un error y no intenta subir el archivo
-
-#### Scenario: Fallo al subir el comprobante
-
-- **WHEN** la subida del archivo falla
-- **THEN** el sistema muestra un error y permite reintentar sin perder los datos ya ingresados
-
 ### Requirement: Pantalla final con el código QR
 
 Al completar el registro en línea, el sistema SHALL mostrar una pantalla de confirmación con el código QR del participante, su `participantId` y una indicación de que el pago quedó pendiente de revisión, y SHALL permitir compartir o guardar el gafete como una imagen del código QR. **Los campos extendidos capturados (localidad, region, edad, diasAsistencia, rol) se envían al backend y se almacenan en el participante, pero no se muestran en la pantalla de confirmación**.
@@ -131,25 +88,3 @@ Al completar el registro en línea, el sistema SHALL mostrar una pantalla de con
 - **WHEN** el participante toca "Guardar/Compartir" y el navegador no soporta compartir archivos (p.ej. Firefox en escritorio)
 - **THEN** el sistema descarga la imagen PNG del gafete
 - **AND** no copia el identificador al portapapeles
-
-### Requirement: Diseño responsive y mobile friendly
-
-El formulario SHALL funcionar correctamente en celulares y tablets: sin desplazamiento
-horizontal, con campos y botones de toque grandes, y con las acciones principales a ancho
-completo apiladas cuando la pantalla es angosta.
-
-#### Scenario: Uso desde un celular
-
-- **WHEN** el participante completa la inscripción desde un celular
-- **THEN** el contenido se adapta al ancho de pantalla y los botones de acción son fáciles de tocar sin zonas colapsadas
-
-### Requirement: Errores de la API visibles
-
-El sistema SHALL mostrar al usuario los errores devueltos por la API (por ejemplo,
-comprobante obligatorio o correo inválido) como mensajes legibles, sin perder los datos ya
-ingresados.
-
-#### Scenario: La API rechaza el registro
-
-- **WHEN** la API responde con un error 400
-- **THEN** el sistema muestra el mensaje del error y mantiene los datos del formulario para corregir

@@ -6,7 +6,12 @@ import { primerErrorLegible, registrarParticipanteSchema, solicitarComprobanteUp
 const base = {
   nombre: 'Ana Pérez',
   contacto: '1122-3344',
-  tipoRegistro: 'online'
+  tipoRegistro: 'online',
+  localidad: 'Tegucigalpa',
+  region: '1',
+  edad: 25,
+  diasAsistencia: ['jueves-24', 'viernes-25', 'sabado-26', 'domingo-27'],
+  rol: 'joven' as const
 }
 
 function legible(payload: unknown): string {
@@ -52,8 +57,19 @@ describe('registrarParticipanteSchema', () => {
     )
   })
 
-  it('rechaza registro sin contacto', () => {
-    expect(legible({ ...base, contacto: '' })).toBe('El contacto es obligatorio')
+  it('acepta contacto opcional vacío', () => {
+    const resultado = registrarParticipanteSchema.safeParse({
+      ...base,
+      contacto: '',
+      comprobante: { contentType: 'image/png', s3Key: 'comprobantes/a.png' }
+    })
+    expect(resultado.success).toBe(true)
+  })
+
+  it('rechaza contacto con formato inválido', () => {
+    expect(legible({ ...base, contacto: 'invalido' })).toBe(
+      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+    )
   })
 
   it('rechaza contacto con menos de 8 dígitos', () => {
@@ -174,7 +190,12 @@ describe('registrarParticipanteSchema', () => {
     const resultado = registrarParticipanteSchema.safeParse({
       nombre: 'Leo García',
       contacto: 'leo@example.com',
-      tipoRegistro: 'in_situ'
+      tipoRegistro: 'in_situ',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
     })
     expect(resultado.success).toBe(true)
   })

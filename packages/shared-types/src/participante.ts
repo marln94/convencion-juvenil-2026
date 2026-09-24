@@ -5,8 +5,13 @@ export type TipoRegistro = 'online' | 'in_situ'
 export interface Participante {
   participantId: string
   nombre: string
-  contacto: string
+  contacto?: string
   correo?: string
+  localidad: string
+  region: string
+  edad: number
+  diasAsistencia: string[]
+  rol: 'joven' | 'encargado' | 'nexo'
   esRegistroPorEncargado: boolean
   encargadoNombre?: string
   encargadoContacto?: string

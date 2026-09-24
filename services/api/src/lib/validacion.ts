@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { CONTENT_TYPES_PERMITIDOS } from './comprobante.js'
 
 const TIPOS_REGISTRO = ['online', 'in_situ'] as const
+const REGIONES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'] as const
+const DIAS_ASISTENCIA = ['jueves-24', 'viernes-25', 'sabado-26', 'domingo-27'] as const
+const ROLES = ['joven', 'encargado', 'nexo'] as const
 
 const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PATRON_TELEFONO = /^\d{4}-\d{4}$/
@@ -37,10 +40,20 @@ const nombreSchema = z
 const contactoSchema = z
   .string()
   .trim()
-  .min(1, { message: 'El contacto es obligatorio' })
-  .refine(validarContacto, {
+  .optional()
+  .refine((valor) => !valor || validarContacto(valor), {
     message: 'El contacto debe ser un teléfono 8877-9955 o un correo válido'
   })
+
+const localidadSchema = z.string().trim().min(1, { message: 'La localidad es obligatoria' })
+
+const regionSchema = z.enum(REGIONES, { message: 'Seleccioná una región válida' })
+
+const edadSchema = z.number().int().positive({ message: 'La edad debe ser un número positivo' })
+
+const diasAsistenciaSchema = z.array(z.enum(DIAS_ASISTENCIA)).min(1, { message: 'Seleccioná al menos un día de asistencia' })
+
+const rolSchema = z.enum(ROLES, { message: 'Seleccioná un rol válido' })
 
 export const registrarParticipanteSchema = z
   .object({
@@ -48,6 +61,11 @@ export const registrarParticipanteSchema = z
     nombre: nombreSchema,
     contacto: contactoSchema,
     correo: z.email({ message: 'El correo es inválido' }).optional(),
+    localidad: localidadSchema,
+    region: regionSchema,
+    edad: edadSchema,
+    diasAsistencia: diasAsistenciaSchema,
+    rol: rolSchema,
     esRegistroPorEncargado: z.boolean().optional(),
     encargadoNombre: z.string().optional(),
     encargadoContacto: z.string().optional(),

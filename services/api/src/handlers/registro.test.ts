@@ -34,7 +34,12 @@ const onlineValido = {
   contacto: '1122-3344',
   correo: 'ana@example.com',
   tipoRegistro: 'online',
-  comprobante: { contentType: 'image/png', s3Key: 'comprobantes/anita.png' }
+  comprobante: { contentType: 'image/png', s3Key: 'comprobantes/anita.png' },
+  localidad: 'Tegucigalpa',
+  region: '1',
+  edad: 25,
+  diasAsistencia: ['jueves-24', 'viernes-25', 'sabado-26', 'domingo-27'],
+  rol: 'joven'
 }
 
 beforeEach(() => {
@@ -79,7 +84,12 @@ describe('POST /inscripciones (in situ)', () => {
     const res = await post('/inscripciones', {
       nombre: 'Leo García',
       contacto: 'leo@example.com',
-      tipoRegistro: 'in_situ'
+      tipoRegistro: 'in_situ',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
     })
     const body = (await res.json()) as RegistrarParticipanteOutput
 
@@ -95,7 +105,12 @@ describe('POST /inscripciones (in situ)', () => {
       participantId: idFijo,
       nombre: 'Leo García',
       contacto: 'leo@example.com',
-      tipoRegistro: 'in_situ'
+      tipoRegistro: 'in_situ',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
     })
     const body = (await res.json()) as RegistrarParticipanteOutput
 
@@ -112,7 +127,12 @@ describe('POST /inscripciones (in situ)', () => {
       participantId: 'no-es-uuid',
       nombre: 'Leo García',
       contacto: 'leo@example.com',
-      tipoRegistro: 'in_situ'
+      tipoRegistro: 'in_situ',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
     })
 
     expect(res.status).toBe(400)
@@ -156,10 +176,15 @@ describe('validaciones de datos', () => {
     expect(await res.json()).toEqual({ message: 'El nombre es obligatorio' })
   })
 
-  it('rechaza sin contacto', async () => {
+  it('acepta contacto opcional vacío', async () => {
     const res = await post('/inscripciones', { ...onlineValido, contacto: '' })
+    expect(res.status).toBe(201)
+  })
+
+  it('rechaza contacto con formato inválido', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, contacto: 'invalido' })
     expect(res.status).toBe(400)
-    expect(await res.json()).toEqual({ message: 'El contacto es obligatorio' })
+    expect(await res.json()).toEqual({ message: 'El contacto debe ser un teléfono 8877-9955 o un correo válido' })
   })
 
   it('rechaza tipo de registro inválido', async () => {
@@ -172,6 +197,36 @@ describe('validaciones de datos', () => {
     const res = await post('/inscripciones', { ...onlineValido, correo: 'no-es-correo' })
     expect(res.status).toBe(400)
     expect(await res.json()).toEqual({ message: 'El correo es inválido' })
+  })
+
+  it('rechaza sin localidad', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, localidad: '' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'La localidad es obligatoria' })
+  })
+
+  it('rechaza region inválida', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, region: '99' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Seleccioná una región válida' })
+  })
+
+  it('rechaza edad no positiva', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, edad: 0 })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'La edad debe ser un número positivo' })
+  })
+
+  it('rechaza sin diasAsistencia', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, diasAsistencia: [] })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Seleccioná al menos un día de asistencia' })
+  })
+
+  it('rechaza rol inválido', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, rol: 'invalido' })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Seleccioná un rol válido' })
   })
 
   it('mapea la colisión de participantId a 409', async () => {

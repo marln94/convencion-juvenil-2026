@@ -1,13 +1,6 @@
-# Registro
+# Spec Delta
 
-## Purpose
-
-Permite dar de alta a los asistentes de la convención por vía online o in situ, generar su
-código QR al momento del registro y cargar el comprobante de pago, para que los módulos
-posteriores (revisión de pagos, equipos, check-in) trabajen sobre participantes ya
-registrados y con QR disponible.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Registro online de participante
 
@@ -65,58 +58,6 @@ Cuando el participante es inscrito por un encargado (por ejemplo un padre inscri
 #### Scenario: Registro con contacto del encargado inválido
 - **WHEN** el `encargadoContacto` no es un teléfono con formato `8877-9955` ni un correo válido
 - **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto del encargado debe ser un teléfono 8877-9955 o un correo válido
-
-### Requirement: Generación del código QR al finalizar el registro
-
-El sistema SHALL generar el código QR de cada participante en el mismo momento en que se
-completa el registro, sin esperar a que el pago sea confirmado, y SHALL codificarlo a
-partir del `participantId`. El código no cambia si el estado de pago cambia más adelante.
-
-#### Scenario: QR disponible aunque el pago siga pendiente
-
-- **WHEN** se completa un registro online cuyo comprobante aún no ha sido revisado
-- **THEN** el sistema devuelve en la respuesta el `codigoQr` asociado al `participantId`
-- **AND** el `codigoQr` es el mismo que se devolverá en cualquier consulta posterior del participante
-
-### Requirement: Almacenamiento del correo del participante
-
-El sistema SHALL almacenar el campo `correo` en el registro del participante cuando viene
-incluido en un alta online, y SHALL validar su formato. El sistema NO envía ningún correo
-en esta fase: el QR solo se entrega en la respuesta de la API.
-
-#### Scenario: Registro online con correo válido
-
-- **WHEN** se completa un registro online que incluye un correo electrónico válido
-- **THEN** el sistema guarda el `correo` en el registro del participante
-- **AND** el QR se entrega únicamente en la respuesta de la API, sin intentar enviar correo
-
-#### Scenario: Registro online sin correo
-
-- **WHEN** se completa un registro online sin correo electrónico
-- **THEN** el sistema guarda el participante sin `correo`
-- **AND** devuelve `codigoQr` en la respuesta
-
-#### Scenario: Correo con formato inválido
-
-- **WHEN** se envía un registro online cuyo campo de correo no tiene un formato de correo válido
-- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el correo es inválido
-
-### Requirement: Subida del comprobante de pago
-
-El sistema SHALL entregar una URL firmada para subir el comprobante (imagen o PDF) a un
-bucket privado, de modo que el archivo se suba directamente sin pasar por el backend. El
-sistema SHALL rechazar tipos de archivo no permitidos antes de generar la URL, y el
-comprobante cargado SHALL quedar referenciado por su `s3Key` en el registro del participante.
-
-#### Scenario: Solicitud de URL de subida para archivo permitido
-
-- **WHEN** se solicita una URL de subida para un archivo con tipo `image/png`, `image/jpeg` o `application/pdf`
-- **THEN** el sistema responde con una `uploadUrl` firmada, la `s3Key` generada y el `contentType` solicitado
-
-#### Scenario: Solicitud de URL de subida para archivo no permitido
-
-- **WHEN** se solicita una URL de subida para un tipo de archivo distinto de imagen o PDF
-- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el tipo de archivo no está permitido
 
 ### Requirement: Registro in situ
 
