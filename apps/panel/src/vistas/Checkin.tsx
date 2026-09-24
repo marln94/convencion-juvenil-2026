@@ -41,15 +41,24 @@ async function resolverParticipante(id: string): Promise<ResumenParticipante | u
   }
 }
 
-function Escaner({ alEscanear }: { alEscanear: (texto: string) => void }) {
+interface EscanerProps {
+  alEscanear: (texto: string) => void
+  pausado: boolean
+  showHint?: boolean
+  cooldownMs?: number
+}
+
+function Escaner({ alEscanear, pausado, showHint, cooldownMs = 500 }: EscanerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const controlesRef = useRef<IScannerControls | null>(null)
+  const [cooldown, setCooldown] = useState(false)
 
   useEffect(() => {
     let activo = true
     const lector = new BrowserQRCodeReader()
+    let cooldownTimer: ReturnType<typeof setTimeout>
 
-    void (async () => {
+    const iniciarEscaner = async () => {
       try {
         const controles = await lector.decodeFromVideoDevice(
           undefined,
@@ -68,20 +77,75 @@ function Escaner({ alEscanear }: { alEscanear: (texto: string) => void }) {
       } catch {
         // sin permiso o sin cámara: se muestra la vista sin video
       }
-    })()
+    }
+
+    const detenerEscaner = () => {
+      controlesRef.current?.stop()
+      BrowserQRCodeReader.releaseAllStreams()
+      controlesRef.current = null
+    }
+
+    if (!pausado && !cooldown) {
+      void iniciarEscaner()
+    } else {
+      detenerEscaner()
+
+      if (!pausado && cooldown) {
+        cooldownTimer = setTimeout(() => setCooldown(false), cooldownMs)
+      }
+    }
+
+    if (pausado) {
+      setCooldown(true)
+    }
 
     return () => {
       activo = false
-      controlesRef.current?.stop()
-      BrowserQRCodeReader.releaseAllStreams()
+      clearTimeout(cooldownTimer)
+      detenerEscaner()
     }
-  }, [alEscanear])
+  }, [alEscanear, pausado, cooldown, cooldownMs])
 
   return (
-    <video
-      ref={videoRef}
-      className="aspect-video w-full rounded-2xl bg-slate-900 object-cover"
-    />
+    <div className="relative aspect-video w-full rounded-2xl bg-slate-900 overflow-hidden">
+      <video
+        ref={videoRef}
+        className="w-full h-full object-cover"
+      />
+      {pausado && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-2xl"
+          role="status"
+          aria-live="polite"
+          aria-label="Procesando código QR"
+        >
+          <svg
+            className="animate-spin h-10 w-10 text-indigo-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          {showHint && (
+            <p className="mt-2 text-sm text-white/80">Tardando más de lo esperado…</p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -93,6 +157,8 @@ export function VistaCheckin() {
   const [desconocido, setDesconocido] = useState(false)
   const [procesando, setProcesando] = useState(false)
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [isResolving, setIsResolving] = useState(false)
+  const [showHint, setShowHint] = useState(false)
 
   useEffect(() => {
     if (modo === 'buscar') {
@@ -108,11 +174,39 @@ export function VistaCheckin() {
     setDesconocido(false)
     setMensaje(null)
     if (!id) return
-    const encontrado = await resolverParticipante(id)
-    if (encontrado) {
-      setParticipante(encontrado)
-    } else {
-      setDesconocido(true)
+
+    const SHOW_LOADER_DELAY = 200
+    const MIN_LOADER_TIME = 300
+
+    let loaderShown = false
+    const hintTimer = setTimeout(() => setShowHint(true), 5000)
+
+    const showLoaderTimer = setTimeout(() => {
+      loaderShown = true
+      setIsResolving(true)
+      setShowHint(false)
+    }, SHOW_LOADER_DELAY)
+
+    try {
+      const encontrado = await resolverParticipante(id)
+      if (encontrado) {
+        setParticipante(encontrado)
+      } else {
+        setDesconocido(true)
+      }
+    } finally {
+      clearTimeout(hintTimer)
+      clearTimeout(showLoaderTimer)
+
+      if (loaderShown) {
+        setTimeout(() => {
+          setIsResolving(false)
+          setShowHint(false)
+        }, MIN_LOADER_TIME)
+      } else {
+        setIsResolving(false)
+        setShowHint(false)
+      }
     }
   }, [])
 
@@ -170,7 +264,12 @@ export function VistaCheckin() {
       />
 
       {modo === 'escanear' ? (
-        <Escaner alEscanear={alEscanear} />
+        <Escaner
+          alEscanear={alEscanear}
+          pausado={isResolving}
+          showHint={showHint}
+          cooldownMs={500}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
