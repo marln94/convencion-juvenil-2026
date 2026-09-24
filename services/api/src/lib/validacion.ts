@@ -60,7 +60,7 @@ export const registrarParticipanteSchema = z
     participantId: z.string().uuid({ message: 'El participantId es inválido' }).optional(),
     nombre: nombreSchema,
     contacto: contactoSchema,
-    correo: z.email({ message: 'El correo es inválido' }).optional(),
+    correo: z.string().trim().optional().refine((valor) => !valor || PATRON_EMAIL.test(valor), { message: 'El correo es inválido' }),
     localidad: localidadSchema,
     region: regionSchema,
     edad: edadSchema,
