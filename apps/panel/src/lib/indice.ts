@@ -30,3 +30,17 @@ export async function buscarEnIndice(texto: string): Promise<ResumenParticipante
   if (!termino) return todos
   return todos.filter((participante) => participante.nombre.toLowerCase().includes(termino))
 }
+
+export async function actualizarEquiposEnIndice(
+  asignacion: Record<string, string>
+): Promise<void> {
+  const db = await obtenerBaseDatos()
+  const tx = db.transaction('indice', 'readwrite')
+  for (const [participantId, equipoColor] of Object.entries(asignacion)) {
+    const existente = await tx.store.get(participantId)
+    if (existente) {
+      await tx.store.put({ ...existente, equipoColor })
+    }
+  }
+  await tx.done
+}

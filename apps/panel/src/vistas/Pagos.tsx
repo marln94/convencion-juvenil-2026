@@ -10,6 +10,7 @@ import {
   Seleccion
 } from '../componentes/ui'
 import { api } from '../lib/api'
+import { agregarAlIndice } from '../lib/indice'
 
 const ESTADOS: EstadoPago[] = ['pendiente', 'pagado', 'rechazado']
 
@@ -47,10 +48,17 @@ export function VistaPagos() {
     setProcesando(item.participantId)
     setError(null)
     try {
-      await api.revisarPago({
+      const resultado = await api.revisarPago({
         participantId: item.participantId,
         decision,
         motivoRechazo: decision === 'rechazar' ? motivo.trim() || undefined : undefined
+      })
+      await agregarAlIndice({
+        participantId: item.participantId,
+        nombre: item.nombre,
+        estadoPago: resultado.participante.estadoPago,
+        equipoColor: resultado.participante.equipoColor,
+        checkIn: resultado.participante.checkIn
       })
       setRechazando(null)
       setMotivo('')

@@ -94,6 +94,14 @@ export function VistaCheckin() {
   const [procesando, setProcesando] = useState(false)
   const [mensaje, setMensaje] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (modo === 'buscar') {
+      setParticipante(undefined)
+      setDesconocido(false)
+      setMensaje(null)
+    }
+  }, [modo])
+
   const procesar = useCallback(async (texto: string) => {
     const id = texto.trim()
     setParticipante(undefined)

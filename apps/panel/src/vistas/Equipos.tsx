@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Alerta, Boton, EncabezadoVista } from '../componentes/ui'
 import { api } from '../lib/api'
-import { buscarEnIndice } from '../lib/indice'
+import { buscarEnIndice, actualizarEquiposEnIndice } from '../lib/indice'
 
 function nombreDe(indice: Map<string, string>, participantId: string): string {
   return indice.get(participantId) ?? participantId
@@ -53,6 +53,7 @@ export function VistaEquipos() {
     setError(null)
     try {
       const resultado = await api.generarEquipos()
+      await actualizarEquiposEnIndice(resultado.asignacion)
       setAsignacion(resultado)
       const indice = await buscarEnIndice('')
       setNombres(new Map(indice.map((i: ResumenParticipante) => [i.participantId, i.nombre])))
@@ -72,6 +73,8 @@ export function VistaEquipos() {
     setError(null)
     try {
       await api.bloquearEquipos()
+      const equipos = await api.obtenerEquipos()
+      await actualizarEquiposEnIndice(equipos.asignacion)
       await cargar()
     } catch (causa) {
       if (causa instanceof ApiError) {
