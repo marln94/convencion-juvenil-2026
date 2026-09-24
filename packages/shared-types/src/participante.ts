@@ -13,6 +13,8 @@ export interface Participante {
   tipoRegistro: TipoRegistro
   estadoPago: EstadoPago
   comprobanteS3Key?: string
+  revisadoEn?: string
+  motivoRechazo?: string
   equipoColor?: string
   checkIn: boolean
   checkInTimestamp?: string

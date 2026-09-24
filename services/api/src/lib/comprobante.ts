@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import type { S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -16,6 +16,7 @@ const EXTENSIONES: Record<ContentTypeComprobante, string> = {
 }
 
 export const VALIDEZ_SUBIDA_SEGUNDOS = 5 * 60
+export const VALIDEZ_LECTURA_SEGUNDOS = 5 * 60
 export const MAX_TAMANO_SUBIDA_BYTES = 5 * 1024 * 1024
 
 export const ES_S3_LOCAL = Boolean(process.env.S3_ENDPOINT)
@@ -70,4 +71,19 @@ export async function firmarSubidaComprobante(contentType: string): Promise<{
   })
 
   return { uploadUrl, s3Key, contentType }
+}
+
+export async function firmarLecturaComprobante(s3Key: string): Promise<string> {
+  const bucket = process.env.COMPROBANTES_BUCKET
+  if (!bucket) {
+    throw new Error('Falta la variable de entorno COMPROBANTES_BUCKET')
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: s3Key
+  })
+  return getSignedUrl(getS3Client(), command, {
+    expiresIn: VALIDEZ_LECTURA_SEGUNDOS
+  })
 }

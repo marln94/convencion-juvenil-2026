@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
@@ -17,8 +20,13 @@
     "typecheck": "pnpm -r run typecheck",
     "clean": "pnpm -r run clean",
     "dev:registro": "pnpm --filter @convencion/registro dev",
+    "dev:panel": "pnpm --filter @convencion/panel dev",
     "build:registro": "pnpm --filter @convencion/registro build",
+    "build:panel": "pnpm --filter @convencion/panel build",
     "dev:api": "pnpm --filter @convencion/api dev:api",
-    "setup:local": "pnpm --filter @convencion/api local-setup"
+    "setup:local": "pnpm --filter @convencion/api local-setup",
+    "cdk:synth": "pnpm --filter @convencion/infra-cdk synth",
+    "cdk:deploy": "pnpm --filter @convencion/infra-cdk deploy:cdk",
+    "deploy:apps": "pnpm --filter @convencion/infra-cdk deploy:apps"
   }
 }

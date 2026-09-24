@@ -5,6 +5,8 @@ import { Hono } from 'hono'
 import { handle } from 'hono/aws-lambda'
 import { ZodError } from 'zod'
 
+import { requireAuth } from '../lib/auth.js'
+import { corsHabilitado } from '../lib/cors.js'
 import { firmarSubidaComprobante, VALIDEZ_SUBIDA_SEGUNDOS } from '../lib/comprobante.js'
 import { HttpError } from '../lib/http-error.js'
 import {
@@ -15,6 +17,8 @@ import {
 import { crearParticipante } from '../repos/participantes.js'
 
 const app = new Hono()
+
+app.use('*', corsHabilitado())
 
 app.post('/inscripciones/comprobante-upload', async (c) => {
   const input = await c.req.json()
@@ -30,11 +34,11 @@ app.post('/inscripciones/comprobante-upload', async (c) => {
   return c.json(respuesta, 200)
 })
 
-app.post('/inscripciones', async (c) => {
+app.post('/inscripciones', requireAuth({ permitirInscripcionOnline: true }), async (c) => {
   const input = await c.req.json()
   const datos = registrarParticipanteSchema.parse(input)
 
-  const participantId = randomUUID()
+  const participantId = datos.participantId ?? randomUUID()
   const esInSitu = datos.tipoRegistro === 'in_situ'
 
   const participante: Participante = {

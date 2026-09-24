@@ -12,7 +12,7 @@ context: |
     - Backend: Node.js + TypeScript en Lambda, enrutado con Hono.
     - Base de datos: DynamoDB on-demand. Tablas: Participantes y Configuracion.
     - Infraestructura: AWS CDK (TypeScript). S3 + CloudFront (frontend), API Gateway
-      (Lambdas), Cognito (login admin/staff), SES (correos), S3 privado (comprobantes).
+      (Lambdas), Cognito (login admin/staff), S3 privado (comprobantes).
     - Compartido: packages/shared-types (modelo y DTOs) y packages/api-client
       (cliente HTTP tipado) usados por apps y handlers.
 

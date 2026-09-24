@@ -1,6 +1,9 @@
 import type { RegistrarParticipanteOutput, SolicitarComprobanteUploadOutput } from '@convencion/shared-types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+process.env.AUTH_BYPASS_DEV = 'true'
+process.env.AUTH_BYPASS_ROL = 'admin'
+
 const { crearParticipanteMock, firmarSubidaComprobanteMock } = vi.hoisted(() => ({
   crearParticipanteMock: vi.fn(),
   firmarSubidaComprobanteMock: vi.fn()
@@ -84,6 +87,37 @@ describe('POST /inscripciones (in situ)', () => {
     expect(body.participante.estadoPago).toBe('pagado')
     expect(body.participante.tipoRegistro).toBe('in_situ')
     expect(body.codigoQr).toBe(body.participante.participantId)
+  })
+
+  it('respeta el participantId provisto para el in situ offline', async () => {
+    const idFijo = 'a3f8c9d2-4e5b-4f6a-9b7c-1d2e3f4a5b6c'
+    const res = await post('/inscripciones', {
+      participantId: idFijo,
+      nombre: 'Leo García',
+      contacto: 'leo@example.com',
+      tipoRegistro: 'in_situ'
+    })
+    const body = (await res.json()) as RegistrarParticipanteOutput
+
+    expect(res.status).toBe(201)
+    expect(body.participante.participantId).toBe(idFijo)
+    expect(body.codigoQr).toBe(idFijo)
+    expect(crearParticipanteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ participantId: idFijo })
+    )
+  })
+
+  it('rechaza 400 si el participantId provisto no es un UUID', async () => {
+    const res = await post('/inscripciones', {
+      participantId: 'no-es-uuid',
+      nombre: 'Leo García',
+      contacto: 'leo@example.com',
+      tipoRegistro: 'in_situ'
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'El participantId es inválido' })
+    expect(crearParticipanteMock).not.toHaveBeenCalled()
   })
 })
 

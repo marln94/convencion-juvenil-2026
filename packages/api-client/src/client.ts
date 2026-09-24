@@ -8,11 +8,23 @@ export class ApiError extends Error {
   }
 }
 
-export async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+export interface OpcionesCliente {
+  getToken?: () => string | Promise<string | undefined> | undefined
+  onUnauthorized?: () => void | Promise<void>
+}
+
+export async function request<T>(
+  baseUrl: string,
+  path: string,
+  init?: RequestInit,
+  opciones: OpcionesCliente = {}
+): Promise<T> {
+  const token = await opciones.getToken?.()
   const res = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {})
     }
   })
@@ -26,6 +38,9 @@ export async function request<T>(baseUrl: string, path: string, init?: RequestIn
       }
     } catch {
       // cuerpo no JSON: se conserva el mensaje por defecto
+    }
+    if (res.status === 401) {
+      await opciones.onUnauthorized?.()
     }
     throw new ApiError(res.status, message)
   }

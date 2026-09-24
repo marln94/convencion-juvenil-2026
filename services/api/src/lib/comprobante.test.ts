@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   esContentTypePermitido,
   firmarSubidaComprobante,
+  firmarLecturaComprobante,
   CONTENT_TYPES_PERMITIDOS
 } from './comprobante.js'
 import { HttpError } from './http-error.js'
@@ -37,5 +38,24 @@ describe('firmarSubidaComprobante', () => {
 
     await expect(firmarSubidaComprobante('image/gif')).rejects.toBeInstanceOf(HttpError)
     await expect(firmarSubidaComprobante('image/gif')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('firmarLecturaComprobante', () => {
+  it('firma una URL de lectura para la s3Key pedida', async () => {
+    process.env.COMPROBANTES_BUCKET = 'convencion-comprobantes-test'
+
+    const vistaUrl = await firmarLecturaComprobante('comprobantes/a.png')
+
+    expect(vistaUrl).toContain('X-Amz-')
+    expect(vistaUrl).toContain('a.png')
+  })
+
+  it('falla con error claro si falta la variable del bucket', async () => {
+    delete process.env.COMPROBANTES_BUCKET
+
+    await expect(
+      firmarLecturaComprobante('comprobantes/a.png')
+    ).rejects.toThrow('Falta la variable de entorno COMPROBANTES_BUCKET')
   })
 })

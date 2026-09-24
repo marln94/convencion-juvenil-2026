@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs'
 
 import { CreateBucketCommand, ListBucketsCommand, S3Client } from '@aws-sdk/client-s3'
-import { CreateTableCommand, DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
+import { CreateTableCommand, DynamoDBClient, ListTablesCommand, UpdateTableCommand } from '@aws-sdk/client-dynamodb'
 
 if (existsSync('.env.local')) {
   process.loadEnvFile('.env.local')
@@ -47,24 +47,64 @@ async function esperar(predicado: () => Promise<boolean>, nombre: string): Promi
   throw new Error(`${nombre} no respondió a tiempo`)
 }
 
-async function crearTabla(nombre: string, clave: string): Promise<void> {
+async function crearTabla(
+  nombre: string,
+  clave: string,
+  indicesSecundarios: { nombre: string; claveParticion: string; claveOrden?: string }[] = []
+): Promise<void> {
+  const indices = indicesSecundarios.map((i) => ({
+    IndexName: i.nombre,
+    KeySchema: [
+      { AttributeName: i.claveParticion, KeyType: 'HASH' },
+      ...(i.claveOrden ? [{ AttributeName: i.claveOrden, KeyType: 'RANGE' }] : [])
+    ],
+    Projection: { ProjectionType: 'ALL' }
+  }))
+  const nombresAtributos = [clave, ...indicesSecundarios.flatMap((i) => [i.claveParticion, i.claveOrden].filter(Boolean))]
+  const attributeDefinitions = [...new Set(nombresAtributos)].map((nombreAtributo) => ({
+    AttributeName: nombreAtributo,
+    AttributeType: 'S'
+  }))
+
   try {
     await dynamo.send(
       new CreateTableCommand({
         TableName: nombre,
         KeySchema: [{ AttributeName: clave, KeyType: 'HASH' }],
-        AttributeDefinitions: [{ AttributeName: clave, AttributeType: 'S' }],
+        AttributeDefinitions: attributeDefinitions,
+        ...(indices.length > 0 ? { GlobalSecondaryIndexes: indices } : {}),
         BillingMode: 'PAY_PER_REQUEST'
       })
     )
     console.log(`tabla ${nombre} creada`)
+    return
   } catch (error) {
     const mensaje = (error as { name?: string }).name
     if (mensaje === 'ResourceInUseException') {
       console.log(`tabla ${nombre} ya existe`)
-      return
+    } else {
+      throw error
     }
-    throw error
+  }
+
+  if (indices.length === 0) return
+
+  try {
+    await dynamo.send(
+      new UpdateTableCommand({
+        TableName: nombre,
+        AttributeDefinitions: attributeDefinitions,
+        GlobalSecondaryIndexUpdates: indices.map((indice) => ({ Create: indice }))
+      })
+    )
+    console.log(`index secundario de ${nombre} creado`)
+  } catch (error) {
+    const mensaje = (error as { name?: string }).name
+    if (mensaje === 'ResourceInUseException') {
+      console.log(`index secundario de ${nombre} ya existe`)
+    } else {
+      throw error
+    }
   }
 }
 
@@ -101,7 +141,10 @@ await esperar(async () => {
   }
 }, 'MinIO')
 
-await crearTabla(tabla, 'participantId')
+await crearTabla(tabla, 'participantId', [
+  { nombre: 'GSI-EstadoPago', claveParticion: 'estadoPago', claveOrden: 'fechaRegistro' },
+  { nombre: 'GSI-Equipo', claveParticion: 'equipoColor', claveOrden: 'fechaRegistro' }
+])
 await crearTabla(tablaConfiguracion, 'clave')
 await configurarBucket()
 

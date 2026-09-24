@@ -19,6 +19,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1138.0",
     "@convencion/shared-types": "workspace:*",
     "hono": "^4.6.0",
+    "jose": "^6.2.12",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -44,6 +44,7 @@ const contactoSchema = z
 
 export const registrarParticipanteSchema = z
   .object({
+    participantId: z.string().uuid({ message: 'El participantId es inválido' }).optional(),
     nombre: nombreSchema,
     contacto: contactoSchema,
     correo: z.email({ message: 'El correo es inválido' }).optional(),
@@ -103,6 +104,32 @@ export const solicitarComprobanteUploadSchema = z.object({
 
 export type RegistrarParticipanteValido = z.infer<typeof registrarParticipanteSchema>
 export type SolicitarComprobanteUploadValido = z.infer<typeof solicitarComprobanteUploadSchema>
+
+export const revisarPagoSchema = z.object({
+  participantId: z.string().trim().min(1, { message: 'El participantId es obligatorio' }),
+  decision: z.enum(['aprobar', 'rechazar'], { message: 'La decisión es inválida' }),
+  motivoRechazo: z
+    .string()
+    .trim()
+    .min(1, { message: 'El motivo de rechazo no puede estar vacío' })
+    .optional()
+})
+
+export type RevisarPagoValido = z.infer<typeof revisarPagoSchema>
+
+export const coloresEquiposSchema = z.object({
+  colores: z
+    .array(z.string().trim().min(1, { message: 'Los colores no pueden estar vacíos' }))
+    .min(1, { message: 'Se requiere al menos un color' })
+})
+
+export type ColoresEquiposValido = z.infer<typeof coloresEquiposSchema>
+
+export const checkInSchema = z.object({
+  participantId: z.string().trim().min(1, { message: 'El participantId es obligatorio' })
+})
+
+export type CheckInValido = z.infer<typeof checkInSchema>
 
 export function primerErrorLegible(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'Solicitud inválida'

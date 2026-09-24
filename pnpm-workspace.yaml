@@ -2,5 +2,4 @@ packages:
   - "packages/*"
   - "services/*"
   - "apps/*"
-  # Dir futuro (se agrega al iniciar la infraestructura):
-  # - "infra/cdk"
+  - "infra/cdk"
