@@ -320,10 +320,8 @@ export function App() {
                 <Hero className="relative py-6 md:py-12">
                   <div className="text-center">
                     <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-4 md:mb-8" role="img" aria-label="Muy pronto">
-                      <span className="t-outline" aria-hidden="true">MUY PRONTO</span>
-                      <span className="t-solid" aria-hidden="true">MUY PRONTO</span>
-                      <span className="t-outline" aria-hidden="true">MUY PRONTO</span>
-                      <span className="t-solid" aria-hidden="true">MUY PRONTO</span>
+                      <span className="t-outline" aria-hidden="true">MUY</span>
+                      <span className="t-solid" aria-hidden="true">PRONTO</span>
                     </div>
                     <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter mx-auto h-auto w-40 sm:w-56" />
                     <Brush position="tr" className="animate-brush-fade" />
@@ -558,13 +556,15 @@ export function App() {
           </Container>
         </main>
 
-        <footer className="registro-footer no-print mt-auto shrink-0">
-          <Container>
-            <p className="py-3 text-center text-xs md:py-8" style={{ color: 'var(--color-ink-soft)' }}>
-              {NOMBRE_CONVENCION} · Inscripción en línea
-            </p>
-          </Container>
-        </footer>
+        {paso !== 'bienvenida' && (
+          <footer className="registro-footer no-print mt-auto shrink-0">
+            <Container>
+              <p className="py-3 text-center text-xs md:py-8" style={{ color: 'var(--color-ink-soft)' }}>
+                {NOMBRE_CONVENCION} · Inscripción en línea
+              </p>
+            </Container>
+          </footer>
+        )}
       </div>
     </Fragment>
   )

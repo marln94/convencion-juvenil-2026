@@ -22,19 +22,41 @@ The system SHALL provide a MarkNeq component rendering the red brush ≠ symbol 
 - **THEN** it serves ≠ red on white circle
 
 ### Requirement: Watercolor brush components (Brush)
-The system SHALL provide Brush components for large red watercolor stains positioned at viewport edges.
+The system SHALL provide Brush components rendering a soft red ink wash anchored to a viewport corner, painted on a `position: fixed; inset: 0` element with `pointer-events: none`, `user-select: none` and `mix-blend-mode: multiply`.
+
+Each wash SHALL be built from layered CSS `radial-gradient` stops rather than clipped SVG geometry, and each gradient SHALL reach zero alpha before the opposite edge of the viewport so that no clip is ever visible.
 
 #### Scenario: Top-right brush renders
 - **WHEN** <Brush position="tr" /> is rendered
-- **THEN** it positions absolute top: -4%, right: -6%, width clamp(160px, 22vw, 340px), rotated 8deg, pointer-events: none, z-index: 0
+- **THEN** the wash originates at the top-right corner of the viewport, its densest stop does not exceed 30% red alpha, and it reaches full transparency before reaching the left or bottom edge
 
 #### Scenario: Bottom-left brush renders
 - **WHEN** <Brush position="bl" /> is rendered
-- **THEN** it positions absolute bottom: -6%, left: -5%, width clamp(180px, 24vw, 380px), rotated -12deg, pointer-events: none, z-index: 0
+- **THEN** the wash originates at the bottom-left corner of the viewport, its densest stop does not exceed 34% red alpha, and it reaches full transparency before reaching the right or top edge
 
-#### Scenario: Brushes use transparent PNG/WebP assets
-- **WHEN** brush components render
-- **THEN** they use designer-provided transparent assets (2-3 variants), never over legible text
+#### Scenario: No visible edge at any boundary
+- **WHEN** a brush is rendered at any viewport size
+- **THEN** the viewport edge, the hero's `overflow: hidden` boundary and the gradient box edge all fall outside the painted area, so no straight or clipped edge is perceptible
+
+#### Scenario: Irregular non-elliptical silhouette
+- **WHEN** a brush is rendered
+- **THEN** each variant layers at least two gradients with differing centres so the result reads as an irregular stain rather than a single symmetric ellipse
+
+#### Scenario: Narrow viewports keep the centre clear
+- **WHEN** the viewport is 767px wide or narrower and both brushes render
+- **THEN** the gradient radii contract so the two washes do not overlap behind the headline lockup or the call to action
+
+#### Scenario: Brushes never print
+- **WHEN** the registration document is printed
+- **THEN** brush layers are not rendered
+
+#### Scenario: Brushes remain legible over text
+- **WHEN** a brush overlaps body copy, the headline lockup, or the header
+- **THEN** the underlying text retains at least 4.5:1 contrast, which caps the top-right densest stop at 30% red alpha
+
+#### Scenario: Designer watercolor assets are an optional upgrade
+- **WHEN** designer-provided transparent watercolor PNG/WebP assets are delivered
+- **THEN** they may replace the gradient layers, but the CSS wash is the shipped default and is not a temporary fallback
 
 ### Requirement: Organic lines component (OrganicLines)
 The system SHALL provide OrganicLines component rendering thin black SVG curves (1-2px stroke, no fill).

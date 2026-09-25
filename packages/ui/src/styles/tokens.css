@@ -15,6 +15,14 @@
     --color-red-dark: #8E0B12;
     --color-red-deep: #5C0A0F;
 
+    /* Channel mirrors, for alpha compositing without color-mix.
+       Must stay in sync with the hex values above.
+       Preferred over color-mix(): Lightning CSS downlevels color-mix() to a
+       fallback that drops the alpha, producing an opaque wash. */
+    --color-red-rgb: 217 13 13;
+    --color-red-dark-rgb: 142 11 18;
+    --color-red-deep-rgb: 92 10 15;
+
     /* Semantic Color Aliases */
     --color-bg: var(--color-paper);
     --color-text: var(--color-ink);

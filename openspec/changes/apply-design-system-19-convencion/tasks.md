@@ -102,7 +102,7 @@
 
 - [ ] 12.1 Blocked: replace the placeholder texture with the designer 512×512 tileable PNG
 - [ ] 12.2 Blocked: replace MarkNeq fallback art with the designer `neq-red.svg`
-- [ ] 12.3 Blocked: replace brush fallbacks with designer watercolor PNG/WebP assets
+- [ ] 12.3 Optional: swap the brush ink wash for designer watercolor PNG/WebP assets. No longer blocked — the CSS wash is the shipped form, see design.md 3.1
 - [ ] 12.4 Blocked: replace organic-line fallbacks with designer SVG assets
 - [ ] 12.5 Blocked: define and integrate the designer Honduras map SVG and MapPin usage
 - [ ] 12.6 Blocked: self-host licensed OTF/WOFF2 fonts and remove the Google Fonts dependency if licensing becomes available
@@ -120,3 +120,21 @@
 - [x] 13.9 Raise the `--fs-eyebrow` mobile minimum to 1.25rem while keeping the current `.t-eyebrow` rendering unchanged
 - [x] 13.10 Run root typecheck and production builds for both apps
 - [x] 13.11 Repair the OpenSpec delta structure and pass `openspec validate apply-design-system-19-convencion --strict`
+
+## 14. Full-Bleed Brush Ink Wash
+
+- [x] 14.1 Record the full-bleed ink-wash decision in design.md and reclassify the CSS gradients from fallback to shipped form
+- [x] 14.2 Rewrite the `design-system-decorative` brush requirement so the contract is corner anchoring and zero-alpha falloff instead of literal box geometry
+- [x] 14.3 Drop the unimplemented parallax promise from the `design-system-motion` brush requirement
+- [x] 14.4 Replace the clipped `viewBox` ellipse stack in `Brush.tsx` with a bare fixed-position div, keeping the `Brush` / `BrushProps` / `BrushPosition` signature and the `.brush`, `.brush--tr`, `.brush--bl` class names intact
+- [x] 14.5 Rebuild `.brush` as layered `radial-gradient` stops anchored to the viewport corners, dropping `aspect-ratio` and the rotations
+- [x] 14.6 Cap the top-right densest stop at 30% red alpha so the header eyebrow keeps 4.5:1, and cap the bottom-left at 34%
+- [x] 14.7 Contract the gradient radii below 768px so the two washes do not overlap behind the lockup and the CTA
+- [x] 14.8 Hide `.brush` under `@media print` so the fixed layer does not repeat on every page
+- [x] 14.9 Switch `.brush` to `screen` under `.theme-dark`, since `multiply` of red over the dark background is black
+- [x] 14.10 Update `DESIGN_NOTES.md`, which still described the removed SVG fallback, rotations and responsive offsets
+- [x] 14.11 Pass root typecheck, both app builds and `pnpm verify:design`
+- [x] 14.12 Visually confirm at 375, 768 and 1440px that no wash edge is perceptible and that the wash does not leak into the wizard steps
+- [x] 14.13 Fix the welcome screen overflowing the viewport on desktop. The lockup was capped at `max-w-3xl` (768px) while `--fs-hero` reaches 128px, and "MUY PRONTO" needs 883px, so each of the 4 spans wrapped to 2 lines at 243px instead of 122px. Split the lockup into 2 spans — "MUY" as .t-outline and "PRONTO" as .t-solid, 293px and 558px at 128px, both on one line — and drop `min-height: 100svh` from `.hero` so it sizes to content instead of being pinned to the viewport below the header. Measured after: lockup 973px to 243px, hero 1406px to 677px, call to action from 648px below the fold to 731px, visible at 1440x813, 1920x993, 1280x713 and 1024x813. A flex chain on main/container/hero was tried and measured as a no-op, since flex items cannot shrink below their content-based automatic minimum size.
+- [x] 14.14 The registration shell rendered an 80px `registro-footer` after `main`, so the welcome screen overflowed even once the hero was content-sized. The footer repeats on the welcome screen what the header already shows (event name and "Inscripción en línea"), so gate it behind `paso !== 'bienvenida'`. `paso` is only ever assigned `identidad`, `comprobante`, a neighbouring step id, `confirmacion` or `contacto` and is never reset to `bienvenida`, so the footer stays hidden for the initial screen and renders from step 1 onward. Measured after: 1920x993, 1440x813, 1024x813 and 768x813 all report zero document scroll, and the call to action is above the fold at 1440x813, 1920x993, 1280x713 and 1024x813.
+- [ ] 14.15 Short viewports still overflow, and it is a content problem rather than a layout one. At 1366x768 the page is 770px against a 681px viewport and the call to action sits 41px below the fold; at 1280x800 it is 755px against 713. The header is 102px and the hero is 652 to 677px depending on the fluid `--fs-hero`. Reaching zero overflow on a 1366x768 laptop requires reducing the hero as well, by moving `py-12` to `py-8` and the 224px `neq` down to 160px, which is a visual decision

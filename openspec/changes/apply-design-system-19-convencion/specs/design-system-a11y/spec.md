@@ -10,8 +10,8 @@ Defines accessibility patterns and requirements for the design system components
 The system SHALL ensure stacked headlines (.stack) are accessible to screen readers.
 
 #### Scenario: Stacked headlines have aria-label
-- **WHEN** .stack contains repeated headline spans
-- **THEN** the container has aria-label with the text content once, and all duplicate spans have aria-hidden="true"
+- **WHEN** .stack contains headline spans that repeat or split the same phrase
+- **THEN** the container has aria-label with the text content once, and all visually duplicated spans have aria-hidden="true"
 
 #### Scenario: Outline text is decorative only
 - **WHEN** .t-outline is used

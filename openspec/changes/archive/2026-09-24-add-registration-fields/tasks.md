@@ -31,5 +31,5 @@
 ## 5. Build & Integration Verification
 
 - [x] 5.1 Build completo monorepo: `pnpm build` desde raíz — **verificar: todos los workspaces compilan sin errores**
-- [ ] 5.2 Test integración local: levantar stack local (docker-compose) y probar ambos formularios contra API local — **verificar: registros se crean en DynamoDB con nuevos campos**
-- [ ] 5.3 Verificar panel admin (Pagos, Checkin, Equipos) sigue funcionando con nuevos campos — **verificar: vistas no rompen, datos legibles**
+- [x] 5.2 Test integración local: levantar stack local (docker-compose) y probar ambos formularios contra API local — **verificar: registros se crean en DynamoDB con nuevos campos** (verificado y confirmado por el usuario)
+- [x] 5.3 Verificar panel admin (Pagos, Checkin, Equipos) sigue funcionando con nuevos campos — **verificar: vistas no rompen, datos legibles** (verificado y confirmado por el usuario)

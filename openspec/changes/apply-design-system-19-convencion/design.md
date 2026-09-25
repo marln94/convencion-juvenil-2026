@@ -71,12 +71,42 @@ Apps add `"@convencion/ui": "workspace:*"` and import `@convencion/ui/styles/tok
 **Fallibacks**:
 - ≠ symbol: Inline SVG path approximating brush stroke (red, textured via filter)
 - Paper texture: SVG `feTurbulence` noise (already in guide)
-- Watercolor brushes: CSS `radial-gradient` + `mix-blend-mode` approximations
+- Watercolor brushes: CSS `radial-gradient` + `mix-blend-mode` — this is the final form, not an approximation (see "Brush as Full-Bleed Ink Wash" below)
 - Organic lines: Inline SVG paths (simple curves)
 - Map: Simplified Honduras SVG (can use public domain GeoJSON → SVG)
 - Fonts: Google Fonts (Poppins, Poiret One, Sacramento) via `<link preconnect>`
 
 **Rationale**: Unblocks implementation immediately. Designer assets often arrive late. CSS fallbacks are performant (no network requests for decorations) and can be swapped 1:1 via CSS `background-image` or component props.
+
+**Exception — brushes are not a fallback.** The gradient technique was originally listed as an approximation to be replaced by designer watercolor PNGs. That inversion is now deliberate: the CSS wash is the shipped form, and designer assets (if delivered) become an optional upgrade. Rationale in "Brush as Full-Bleed Ink Wash" below.
+
+### 3.1 Brush as Full-Bleed Ink Wash
+
+**Decision**: The watercolor brushes are two `radial-gradient` layers painted on a `position: fixed; inset: 0` element. No SVG, no `viewBox`, no rotated, clipped asset.
+
+**Problem it fixes**: the first implementation drew three flat-opacity `<ellipse>` per brush inside `viewBox="0 0 400 300"`. The ellipses extended past the viewBox (e.g. `cx=320 rx=180` → x up to 500) so the SVG root clipped them mid-curve, and `fill-opacity` stayed constant to the rim with no falloff. That produced visible hard edges, compounded by the hero's own `overflow: hidden` clipping a rotated, partially off-canvas box. On mobile the `clamp(160px, 22vw, 340px)` floor made the brush ~43% of viewport width against ~22% on desktop, so it read as a pasted image rather than a bleed.
+
+**Approach**: anchor each gradient to a viewport corner and let alpha reach zero well before the opposite edge. Because the falloff completes inside the box, every clip — the SVG viewport, the hero's `overflow: hidden`, the viewport edge — becomes invisible.
+
+On a 1440×900 viewport, `.brush--tr` uses `112% 84% at 100% 0%` and reaches `transparent` at 66% of the radius, i.e. ~1064px left and ~499px down from the corner. Nothing is ever drawn at a boundary.
+
+**Why `fixed` and not `absolute` inside the Hero**: the Hero is `min-height: 100svh` but sits *below* a ~100px header, so on desktop the welcome screen is ~100px taller than the viewport and the page scrolls. Anchoring the wash to the hero would tie the "corner" to a box that is not the screen corner. `fixed` also escapes the mobile scroll container, where `.hero` collapses to `min-height: auto` (`layout.css:48-50`).
+
+**Why the `rotate()` was dropped**: rotating a viewport-sized layer pulls its own corners inside the viewport, leaving triangular gaps — the same class of defect being fixed.
+
+**Organic edge without SVG**: each variant layers a second, deliberately off-centre gradient so the result is two overlapping irregular ellipses rather than one symmetric one. The `feTurbulence` edge is not reproduced; the layered gradients carry the irregularity.
+
+**Alpha ceilings**: the top-right corner reaches 0.30 and the bottom-left 0.34. At 0.30 the registration header's red eyebrow (`--color-red-dark` `#8E0B12`) still measures 5.2:1 against the washed paper, comfortably over AA. The bottom-left has no text above it and can carry more. `mix-blend-mode: multiply` over black ink is harmless — the washed paper only drops from 16.91:1 to ~10:1 against `--color-ink`, still far past AAA.
+
+**Mobile**: with the wash anchored to the viewport, the two variants would overlap across the centre of a 375px screen, directly over the headline lockup and the CTA. A `max-width: 767px` override contracts the radii to keep the centre clear.
+
+**Print**: a `position: fixed` layer repeats on every printed page, and `@media print` sets `body { background: white }` — the wash would print as a red block. `.brush` is `display: none` in print.
+
+**Dark mode**: `multiply` of red over `--color-bg` `#0A0A0A` is black, so the wash would vanish. `.theme-dark .brush` switches to `screen`. `.theme-dark` is currently defined but never applied in either app, so this is preventive.
+
+**Class names `.brush`, `.brush--tr`, `.brush--bl` are retained** — `scripts/verify-design-system.mjs:23-25` requires them present in the compiled CSS of both apps. The public `Brush` / `BrushProps` / `BrushPosition` signature is unchanged, so `apps/registro/src/App.tsx` requires no edits.
+
+**Known unfixed**: the ~100px desktop scroll described above is masked by the `fixed` wash, not fixed. Tracked separately.
 
 ### 4. Component Architecture: Headless CSS + Thin React Wrappers
 
@@ -173,6 +203,9 @@ export function Button({ variant = 'primary', children, ...props }) {
 | Tailwind v4 ignores shared package classes | Register `packages/ui/src` with `@source` in both app entry stylesheets |
 | Tailwind `.container` overrides the design-system gutter | Keep token formulas identical and use a scoped container rule in the registration shell |
 | Mobile fixed shell hides long content | Keep `main` as the only scroll container, constrain overscroll, and reset the shell for printing |
+| `position: fixed` brush layer repeats across printed pages | `.brush` is `display: none` under `@media print`; verified in print preview |
+| `multiply` wash invisible on dark background | `.theme-dark .brush` switches to `screen`; preventive while the class is unused |
+| Two corner washes overlapping on narrow viewports | `max-width: 767px` override contracts the gradient radii to keep the centre clear |
 
 ## Migration Plan
 
@@ -191,7 +224,7 @@ export function Button({ variant = 'primary', children, ...props }) {
 ## Open Questions
 
 1. **Original font license timeline** — When will OTF/WOFF2 + license be available? (Affects Phase 1 font loading)
-2. **Asset delivery schedule** — When will designer provide ≠ SVG, brushes, map, paper texture? (Affects Phase 2 fallback fidelity)
+2. **Asset delivery schedule** — When will designer provide ≠ SVG, map, paper texture? (Brushes no longer block: the CSS wash is the shipped form, designer watercolours are an optional upgrade)
 3. **Dark mode default** — Should dark mode be opt-in (class toggle) or follow `prefers-color-scheme`? (Guide shows `.theme-dark` class only)
 4. **apps/campo (PWA)** — Not in current apps/ dir. Will it need design system too? (Deferred — not in scope)
 5. **Animation preferences persistence** — Store user's reduced-motion choice? (Native media query handles it; skip for v1)

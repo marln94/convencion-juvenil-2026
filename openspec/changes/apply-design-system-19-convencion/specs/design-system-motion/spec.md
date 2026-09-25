@@ -21,11 +21,11 @@ The system SHALL animate stacked headlines (.stack spans) with staggered transla
 - **THEN** each span animates from translateY(20px) opacity(0) to translateY(0) opacity(1) with 80ms stagger delay between spans
 
 ### Requirement: Watercolor brush fade-in
-The system SHALL animate brush elements with slow fade-in and subtle parallax.
+The system SHALL animate brush elements with a slow fade-in. The brush layer is viewport-anchored, so it SHALL NOT animate parallax on scroll.
 
 #### Scenario: Brushes fade in slowly
-- **WHEN** .brush elements enter viewport
-- **THEN** they animate opacity 0→1 over 800ms with subtle parallax on scroll
+- **WHEN** .brush elements render
+- **THEN** they animate opacity 0→1 over 800ms ease-out and hold at full opacity, with no scroll-linked transform
 
 ### Requirement: Reduced motion compliance
 The system SHALL disable all animations and transitions when user prefers reduced motion.

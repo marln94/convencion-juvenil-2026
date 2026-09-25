@@ -53,11 +53,15 @@ The system SHALL provide a .t-script utility class for handwritten script accent
 - **THEN** it uses --font-script at clamp(1.5rem, 3vw, 2.5rem) size, color var(--color-ink)
 
 ### Requirement: Stacked headline component (.stack)
-The system SHALL provide a .stack component for vertically stacking repeated headlines alternating solid/outline with tight line-height.
+The system SHALL provide a .stack component for vertically stacking headlines alternating solid/outline with tight line-height. Each span SHALL fit on a single line, so the container's max-width must not be narrower than the widest span at the resolved font size.
 
 #### Scenario: Stacked headlines render with correct pattern
 - **WHEN** .stack contains alternating .t-outline and .t-solid spans
 - **THEN** they display as grid with line-height 0.9, each span as block
+
+#### Scenario: Stacked headline spans do not wrap
+- **WHEN** .stack renders at any viewport width
+- **THEN** no span wraps to a second line, since a wrapped span doubles the block height and inflates the surrounding layout
 
 #### Scenario: Stacked headlines accessibility
 - **WHEN** .stack is used for repeated headlines
