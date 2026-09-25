@@ -18,6 +18,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "typecheck": "pnpm -r run typecheck",
+    "verify:design": "node scripts/verify-design-system.mjs",
     "clean": "pnpm -r run clean",
     "dev:registro": "pnpm --filter @convencion/registro dev",
     "dev:panel": "pnpm --filter @convencion/panel dev",

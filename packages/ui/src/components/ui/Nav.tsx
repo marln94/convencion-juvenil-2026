@@ -26,7 +26,6 @@ export function Nav({
     ? "flex w-full flex-col gap-1 p-1"
     : "flex w-full overflow-x-auto gap-1 p-1";
   const itemClasses = vertical ? "shrink-0" : "min-w-0 flex-1";
-  const alignmentClasses = vertical ? "text-left" : "text-center";
 
   return (
     <nav
@@ -40,7 +39,7 @@ export function Nav({
             <button
               type="button"
               onClick={() => onNavigate(item.id)}
-              className={`w-full px-3 py-2 text-sm font-medium transition-colors ${alignmentClasses} ${item.current ? "bg-[var(--color-accent)] text-white" : "text-[var(--color-text)] hover:bg-[var(--color-border)] hover:text-white"}`}
+              className={`nav__item ${item.current ? "nav__item--active" : ""}`}
               aria-current={item.current ? "page" : undefined}
             >
               {item.label}

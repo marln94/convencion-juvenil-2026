@@ -20,9 +20,7 @@
     "./components/decorative": "./src/components/decorative/index.ts",
     "./components/decorative/*": "./src/components/decorative/*.tsx",
     "./components/layout": "./src/components/layout/index.ts",
-    "./components/layout/*": "./src/components/layout/*.tsx",
-    "./components/icons": "./src/components/icons/index.ts",
-    "./components/icons/*": "./src/components/icons/*.tsx"
+    "./components/layout/*": "./src/components/layout/*.tsx"
   },
   "peerDependencies": {
     "react": "^19.1.0",

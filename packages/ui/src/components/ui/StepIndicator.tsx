@@ -9,9 +9,21 @@ export interface StepIndicatorProps {
 
 export function StepIndicator({ current, total, labels, children }: StepIndicatorProps) {
   const progressPercent = ((current - 1) / Math.max(1, total - 1)) * 100;
+  const currentLabel = labels?.[current - 1];
+  const progressLabel = currentLabel
+    ? `Paso ${current} de ${total}: ${currentLabel}`
+    : `Paso ${current} de ${total}`;
 
   return (
-    <div className="step-indicator" role="progressbar" aria-valuenow={current} aria-valuemin={1} aria-valuemax={total}>
+    <div
+      className="step-indicator"
+      role="progressbar"
+      aria-label={progressLabel}
+      aria-valuetext={progressLabel}
+      aria-valuenow={current}
+      aria-valuemin={1}
+      aria-valuemax={total}
+    >
       <div className="step-indicator__track">
         <div className="step-indicator__progress" style={{ width: `${progressPercent}%` }} />
       </div>

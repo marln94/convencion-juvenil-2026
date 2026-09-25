@@ -12,19 +12,10 @@ export function Brush({ position, className = "", style, ...props }: BrushProps)
     bl: "brush--bl",
   };
 
-  const baseStyle: React.CSSProperties = {
-    position: "absolute",
-    pointerEvents: "none",
-    zIndex: 0,
-    userSelect: "none",
-    opacity: 0.6,
-    ...style,
-  };
-
   return (
     <div
       className={`brush ${positionClasses[position]} ${className}`.trim()}
-      style={baseStyle}
+      style={style}
       {...props}
       aria-hidden="true"
     >

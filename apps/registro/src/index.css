@@ -8,7 +8,7 @@
 @import "@convencion/ui/styles/a11y.css";
 @source "../../../packages/ui/src";
 
-@theme {
+@theme inline {
   --color-bg: var(--color-bg);
   --color-text: var(--color-text);
   --color-accent: var(--color-accent);

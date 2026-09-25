@@ -303,11 +303,11 @@ export function App() {
 
   return (
     <Fragment>
-      <div className="registro-shell paper-noise" style={{ background: 'var(--color-bg)' }}>
+      <div className="registro-shell paper-noise bg-bg text-text">
         <header className="registro-header no-print shrink-0 bg-[var(--color-bg)]">
           <Container>
             <div className="py-2 md:py-4">
-              <p className="t-eyebrow text-sm" style={{ color: 'var(--color-accent)' }}>Inscripción en línea</p>
+              <p className="t-eyebrow" style={{ color: 'var(--color-red-dark)' }}>Inscripción en línea</p>
               <h1 className="t-solid text-xl md:text-2xl">{NOMBRE_CONVENCION}</h1>
             </div>
           </Container>
@@ -319,11 +319,11 @@ export function App() {
               {paso === 'bienvenida' && (
                 <Hero className="relative py-6 md:py-12">
                   <div className="text-center">
-                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-4 md:mb-8" aria-label="Muy pronto">
-                      <span className="t-outline">MUY PRONTO</span>
-                      <span className="t-solid">MUY PRONTO</span>
-                      <span className="t-outline">MUY PRONTO</span>
-                      <span className="t-solid">MUY PRONTO</span>
+                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-4 md:mb-8" role="img" aria-label="Muy pronto">
+                      <span className="t-outline" aria-hidden="true">MUY PRONTO</span>
+                      <span className="t-solid" aria-hidden="true">MUY PRONTO</span>
+                      <span className="t-outline" aria-hidden="true">MUY PRONTO</span>
+                      <span className="t-solid" aria-hidden="true">MUY PRONTO</span>
                     </div>
                     <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter mx-auto h-auto w-40 sm:w-56" />
                     <Brush position="tr" className="animate-brush-fade" />
@@ -517,6 +517,9 @@ export function App() {
                 <Section className="print-area text-center">
                   <h2 className="t-solid text-xl">¡Inscripción completada!</h2>
                   <p className="t-eyebrow mt-1">Mostrá este código QR en el ingreso a la convención.</p>
+                  <p className="t-date mt-2">
+                    <time dateTime="2026-12-24">24</time> – <time dateTime="2026-12-27">27 diciembre</time>
+                  </p>
 
                   <div className="mx-auto mt-4 w-full max-w-[240px] sm:mt-6 sm:max-w-[320px] md:max-w-[360px]">
                     <Card className="aspect-square flex items-center justify-center">
@@ -526,6 +529,7 @@ export function App() {
                         size={512}
                         level="M"
                         includeMargin
+                        aria-label={`Código QR de ${resultado.participante.nombre}`}
                         style={{ width: '100%', height: '100%' }}
                       />
                     </Card>

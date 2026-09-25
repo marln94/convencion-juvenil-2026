@@ -34,11 +34,15 @@ export function DayPicker({ label, required, days, value, onChange, error, class
       id={id}
       className={`day-picker ${className}`.trim()}
       aria-describedby={error ? errorId : undefined}
-      aria-required={required ? true : undefined}
     >
       <legend className="label">
         {label}
-        {required && <span className="text-red" aria-hidden="true"> *</span>}
+        {required ? (
+          <>
+            <span className="text-red" aria-hidden="true"> *</span>
+            <span className="sr-only"> (obligatorio)</span>
+          </>
+        ) : null}
       </legend>
       <div className="day-picker__grid">
         {days.map((day) => {

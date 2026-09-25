@@ -11,35 +11,9 @@
     border: 0;
   }
 
-  .skip-link {
-    position: absolute;
-    top: -100%;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: var(--space-2) var(--space-4);
-    background: var(--color-ink);
-    color: var(--color-paper);
-    font-weight: 600;
-    z-index: 10000;
-    border-radius: var(--radius);
-  }
-
-  .skip-link:focus {
-    top: var(--space-4);
-  }
-
   .focus-visible:focus-visible {
     outline: 3px solid var(--color-red);
     outline-offset: 3px;
-  }
-
-  [aria-hidden="true"] {
-    display: none !important;
-  }
-
-  [role="presentation"],
-  [role="none"] {
-    /* Decorative elements hidden from accessibility tree */
   }
 
   .visually-hidden {

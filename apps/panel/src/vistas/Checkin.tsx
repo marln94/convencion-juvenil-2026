@@ -2,7 +2,7 @@ import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
 import type { Participante, ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Alert, Button, Card, Input, Pill, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, Container, Input, Pill, Section, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { agregarAlIndice, buscarEnIndice, obtenerDelIndice } from '../lib/indice'
@@ -235,7 +235,8 @@ export function VistaCheckin() {
   }, [])
 
   return (
-    <div className="container max-w-md">
+    <Container className="max-w-md">
+      <Section className="py-0">
       <VistaHeader
         titulo="Check-in"
         descripcion="Escanea el gafete o busca por nombre"
@@ -365,6 +366,7 @@ export function VistaCheckin() {
       ) : null}
 
       {mensaje ? <Alert variant="success">{mensaje}</Alert> : null}
-    </div>
+      </Section>
+    </Container>
   )
 }

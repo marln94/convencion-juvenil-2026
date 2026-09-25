@@ -119,11 +119,11 @@ export function Button({ variant = 'primary', children, ...props }) {
 
 **Rationale**: Performant (browser-optimized), declarative, respects accessibility natively. No JS animation library needed.
 
-### 8. Icon System: Inline SVG Components
+### 8. Icon System: Inline SVG at the Consumer
 
-**Decision**: Small icons (chevron, check, close, etc.) as inline SVG React components in `packages/ui/src/components/icons/`. No icon font or external library.
+**Decision**: Do not publish a dedicated icons export until a shared icon is required. Small icons remain inline SVG components next to the consuming view. No icon font or external library.
 
-**Rationale**: Zero dependencies, tree-shakable, styleable with `currentColor` (inherits design token colors), matches sharp aesthetic.
+**Rationale**: Avoids dead package exports while keeping zero dependencies, tree-shakable output, `currentColor` styling, and the sharp visual language.
 
 ### 9. Form Components: Uncontrolled with Validation Hook
 

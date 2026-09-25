@@ -2,7 +2,7 @@ import { ApiError } from '@convencion/api-client'
 import type { BandejaPagosItem, EstadoPago } from '@convencion/shared-types'
 import { useCallback, useEffect, useState } from 'react'
 
-import { Alert, Button, Card, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, Container, Input, Pill, Section, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { agregarAlIndice } from '../lib/indice'
 
@@ -69,7 +69,8 @@ export function VistaPagos() {
   }
 
   return (
-    <div className="container">
+    <Container>
+      <Section className="py-0">
       <VistaHeader
         titulo="Revisión de pagos"
         descripcion="Aprobá o rechazá los comprobantes"
@@ -142,9 +143,12 @@ export function VistaPagos() {
                 </Button>
               </div>
             ) : (
-              <p className="mt-2 text-sm font-medium" style={{ color: 'var(--color-ink-soft)' }}>
+              <Pill
+                className="mt-2"
+                variant={item.estadoPago === 'pagado' ? 'green' : 'red'}
+              >
                 {item.estadoPago === 'pagado' ? 'Pago aprobado' : 'Pago rechazado'}
-              </p>
+              </Pill>
             )}
 
             {rechazando?.participantId === item.participantId ? (
@@ -183,6 +187,7 @@ export function VistaPagos() {
           </li>
         )}
       </ul>
-    </div>
+      </Section>
+    </Container>
   )
 }

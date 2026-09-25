@@ -19,15 +19,9 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm",
-    default: "px-5 py-2.5 text-base",
-    lg: "px-7 py-3.5 text-lg",
-  };
-
   return (
     <button
-      className={`btn btn--${variant} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""} ${className}`.trim()}
+      className={`btn btn--${variant} btn--${size} font-display ${fullWidth ? "w-full" : ""} ${className}`.trim()}
       disabled={disabled}
       {...props}
     >

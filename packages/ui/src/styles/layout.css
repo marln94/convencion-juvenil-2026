@@ -33,6 +33,13 @@
     font-size: var(--fs-h1);
   }
 
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gutter);
+    align-items: start;
+  }
+
   @media (max-width: 767px) {
     .section {
       padding-block: var(--space-3);
@@ -41,23 +48,16 @@
     .hero {
       min-height: auto;
     }
-  }
 
-  @media (max-width: 768px) {
     .split {
       grid-template-columns: 1fr;
     }
+  }
 
+  @media (max-width: 768px) {
     .info-block {
       text-align: left;
       justify-items: start;
     }
-  }
-
-  .split {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gutter);
-    align-items: start;
   }
 }

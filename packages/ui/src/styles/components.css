@@ -2,10 +2,12 @@
   /* Buttons */
   .btn {
     display: inline-flex;
+    min-height: 44px;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     font-family: var(--font-display);
+    font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -17,6 +19,24 @@
       background 0.2s,
       color 0.2s,
       transform 0.2s;
+  }
+
+  .btn--sm {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .btn--default {
+    min-height: 44px;
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .btn--lg {
+    min-height: 52px;
+    padding: 0.875rem 1.75rem;
+    font-size: 1.125rem;
   }
 
   .btn--primary {
@@ -207,32 +227,37 @@
     overflow-x: visible;
   }
 
-  .nav a {
-    position: relative;
-    padding: 0.5rem 1rem;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-ink);
-    white-space: nowrap;
-  }
-
-  .nav a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    height: 3px;
-    width: 0;
-    background: var(--color-red);
-    transition: width 0.25s ease;
-  }
-
-  .nav a:hover::after,
-  .nav a[aria-current="page"]::after {
+  .nav__item {
+    display: block;
     width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--color-text);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .nav--vertical .nav__item {
+    text-align: left;
+  }
+
+  .nav__item:hover {
+    color: var(--color-white);
+    background: var(--color-border);
+  }
+
+  .nav__item--active,
+  .nav__item--active:hover {
+    color: var(--color-white);
+    background: var(--color-accent);
   }
 
   /* Step Indicator */
@@ -436,5 +461,45 @@
     .day-picker__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
+
+  .mark-neq {
+    display: inline-block;
+    flex: none;
+    width: clamp(3rem, 8vw, 6rem);
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .hero__neq {
+    width: clamp(12.5rem, 40vw, 32.5rem);
+    max-width: 80%;
+  }
+
+  .brush {
+    position: absolute;
+    z-index: 0;
+    aspect-ratio: 4 / 3;
+    pointer-events: none;
+    user-select: none;
+    mix-blend-mode: multiply;
+  }
+
+  .brush--tr {
+    top: -4%;
+    right: -6%;
+    width: clamp(160px, 22vw, 340px);
+    transform: rotate(8deg);
+  }
+
+  .brush--bl {
+    bottom: -6%;
+    left: -5%;
+    width: clamp(180px, 24vw, 380px);
+    transform: rotate(-12deg);
+  }
+
+  .text-red {
+    color: var(--color-red);
   }
 }

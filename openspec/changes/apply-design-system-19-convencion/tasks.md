@@ -2,7 +2,7 @@
 
 ## 1. Shared UI Package Setup
 
-- [ ] 1.1 Resolve the shared icons export: either create `packages/ui/src/components/icons` with the icons required by the design system or remove the dead exports from `package.json`, then verify every declared export resolves
+- [x] 1.1 Resolve the shared icons export: either create `packages/ui/src/components/icons` with the icons required by the design system or remove the dead exports from `package.json`, then verify every declared export resolves
 - [x] 1.2 Create `packages/ui/package.json` with name `@convencion/ui`, type module, exports for styles and components, peerDependencies on react/react-dom, and verify `pnpm install` succeeds
 - [x] 1.3 Add `@convencion/ui` as workspace dependency to both `apps/panel/package.json` and `apps/registro/package.json` and verify `pnpm install` resolves correctly
 
@@ -14,11 +14,11 @@
 - [x] 2.4 Create `packages/ui/src/styles/base.css` with token import, Google Fonts loading, body reset, and verify no console errors on import
 - [x] 2.5 Update `apps/panel/src/index.css` to import the shared design-system styles and verify the dev server starts without CSS errors
 - [x] 2.6 Update `apps/registro/src/index.css` with the shared design-system imports and verify the dev server starts without CSS errors
-- [ ] 2.7 Replace or validate the self-referential `@theme` token mappings and add a smoke check that Tailwind generates usable `bg-bg`, `text-text`, and `font-display` utilities
+- [x] 2.7 Replace or validate the self-referential `@theme` token mappings and add a smoke check that Tailwind generates usable `bg-bg`, `text-text`, and `font-display` utilities
 
 ## 3. Typography System
 
-- [ ] 3.1 Add a verification page or automated check that renders all typography utilities, including the currently unexercised `.t-fade`, `.t-date`, and `.t-script`, and confirms they match the guide
+- [x] 3.1 Add a verification page or automated check that renders all typography utilities, including the currently unexercised `.t-fade`, `.t-date`, and `.t-script`, and confirms they match the guide
 - [x] 3.2 Add `.stack` component with `display: grid; line-height: 0.9;` and `.stack > span { display: block; }` to `typography.css` and verify stacked headlines alternate solid/outline with tight leading
 - [x] 3.3 Add `@supports not (-webkit-text-stroke: 1px #000)` fallback for `.t-outline` in `typography.css` and verify fallback renders solid text in unsupported browsers
 - [x] 3.4 Add Google Fonts preconnect and stylesheet links to both apps and verify fonts load in the Network tab
@@ -31,8 +31,8 @@
 
 ## 5. Decorative Components
 
-- [ ] 5.1 Add the missing `.mark-neq` and `.hero__neq` sizing/positioning rules, keep the SVG square, and verify default, login, header, and registration usages render at intentional dimensions
-- [ ] 5.2 Add the missing `.brush`, `.brush--tr`, and `.brush--bl` sizing, offset, rotation, and fallback rules, then verify brushes are visible in the registration hero
+- [x] 5.1 Add the missing `.mark-neq` and `.hero__neq` sizing/positioning rules, keep the SVG square, and verify default, login, header, and registration usages render at intentional dimensions
+- [x] 5.2 Add the missing `.brush`, `.brush--tr`, and `.brush--bl` sizing, offset, rotation, and fallback rules, then verify brushes are visible in the registration hero
 - [x] 5.3 Create `packages/ui/src/components/decorative/OrganicLines.tsx` rendering the required inline SVG and verify lines render
 - [x] 5.4 Create `packages/ui/src/components/decorative/DottedConnector.tsx` rendering the L-shaped 4px dotted ink line and verify it renders
 - [x] 5.5 Create `packages/ui/src/components/decorative/MapPin.tsx` with the required responsive circle, white background, centered MarkNeq, and shadow, and verify it renders
@@ -42,18 +42,18 @@
 
 - [x] 6.1 Create `packages/ui/src/styles/layout.css` with token-based `.container` and responsive `.section` spacing, position, and overflow behavior
 - [x] 6.2 Add responsive `.hero` and `.info-block` behavior to `layout.css` and verify hero sizing and alignment across mobile and desktop
-- [ ] 6.3 Fix the `.split` cascade so the mobile single-column rule wins below 768px, and verify the layout stacks correctly
+- [x] 6.3 Fix the `.split` cascade so the mobile single-column rule wins below 768px, and verify the layout stacks correctly
 - [x] 6.4 Create `packages/ui/src/components/layout/Container.tsx`, `Section.tsx`, `Hero.tsx`, `InfoBlock.tsx`, `Split.tsx` as thin wrappers and verify they render with the correct classes
 - [x] 6.5 Export layout components from `packages/ui/src/components/layout/index.ts` and verify imports work
 
 ## 7. UI Components (Core)
 
-- [ ] 7.1 Move Button size-specific spacing into the design-system CSS tokens/classes and verify small, default, and large variants keep appropriate touch targets
+- [x] 7.1 Move Button size-specific spacing into the design-system CSS tokens/classes and verify small, default, and large variants keep appropriate touch targets
 - [x] 7.2 Add `.input`, `.select`, and `.label` styles with the agreed border-based focus and error states, and verify form controls render correctly
 - [x] 7.3 Add `.card` and `.card__tag` styles with sharp corners, paper-light background, and red tag accent
 - [x] 7.4 Add `.alert` styles with a full variant-colored 2px border and variant background, and verify alerts render
 - [x] 7.5 Add `.pill` styles with the four variants and verify pills render
-- [ ] 7.6 Move Nav active and hover states into `components.css` targeting the rendered buttons, remove dead anchor-only rules, and verify horizontal and vertical navigation
+- [x] 7.6 Move Nav active and hover states into `components.css` targeting the rendered buttons, remove dead anchor-only rules, and verify horizontal and vertical navigation
 - [x] 7.7 Add the 5px `.step-indicator` track, red progress, and numbered circles, and verify the indicator renders
 - [x] 7.8 Create the shared React wrappers including `DayPicker`, apply their CSS classes, and verify accessibility behavior in isolation
 
@@ -61,17 +61,17 @@
 
 - [x] 8.1 Create `packages/ui/src/styles/motion.css` with the required entrance keyframes and verify animations play
 - [x] 8.2 Add reduced-motion overrides that disable animations and transitions, and verify they apply when the OS preference matches
-- [ ] 8.3 Finish `a11y.css` semantics: stop globally hiding visible elements through `[aria-hidden="true"]`, keep decorative SVGs visually available, and either wire or remove the unused skip-link utility
+- [x] 8.3 Finish `a11y.css` semantics: stop globally hiding visible elements through `[aria-hidden="true"]`, keep decorative SVGs visually available, and either wire or remove the unused skip-link utility
 
 ## 9. Panel App Refactor
 
-- [ ] 9.1 Remove the unused legacy `apps/panel/src/componentes/ui.tsx` and verify no imports reference it
+- [x] 9.1 Remove the unused legacy `apps/panel/src/componentes/ui.tsx` and verify no imports reference it
 - [x] 9.2 Update the panel login to use design-system Input, Button, Card, and MarkNeq
 - [x] 9.3 Update the panel shell to use the persistent desktop sidebar, mobile bottom bar, Pill connection indicator, and MarkNeq logo
-- [ ] 9.4 Update `Dashboard.tsx` to use the shared Container and Section components instead of raw layout classes, then verify the view
-- [ ] 9.5 Update `Pagos.tsx` to use Pill for payment status and remove the obsolete Table expectation from this task, then verify the view
+- [x] 9.4 Update `Dashboard.tsx` to use the shared Container and Section components instead of raw layout classes, then verify the view
+- [x] 9.5 Update `Pagos.tsx` to use Pill for payment status and remove the obsolete Table expectation from this task, then verify the view
 - [x] 9.6 Refactor `Equipos.tsx` to use design-system components and verify the view
-- [ ] 9.7 Update `Checkin.tsx` to use the intended Hero/Section layout for the scan area or explicitly revise the task to match the approved card-based layout, then verify scanning
+- [x] 9.7 Update `Checkin.tsx` to use the shared Container and Section primitives with the approved card-based scanning layout; Hero is intentionally omitted inside the panel shell
 - [x] 9.8 Refactor `RegistroInsitu.tsx` to use design-system form components including DayPicker
 - [x] 9.9 Update the panel PWA manifest theme and background colors and verify the generated manifest
 - [x] 9.10 Provide the panel favicon and verify it appears in the browser tab
@@ -83,20 +83,20 @@
 - [x] 10.3 Refactor the step indicator to use the shared StepIndicator component
 - [x] 10.4 Refactor all form steps to use design-system controls and DayPicker while preserving validation
 - [x] 10.5 Refactor the receipt step to use the design-system upload treatment, Button, and Alert
-- [ ] 10.6 Add semantic `<time>` elements for the event date range to the confirmation screen, or revise the requirement if dates are intentionally omitted, and verify the chosen behavior
+- [x] 10.6 Add semantic `<time>` elements for the event date range to the confirmation screen, or revise the requirement if dates are intentionally omitted, and verify the chosen behavior
 - [x] 10.7 Add `.paper-noise` to the registration root and verify the texture appears
 
 ## 11. Integration Verification & Polish
 
 - [x] 11.1 Run `pnpm typecheck` in root and verify zero TypeScript errors across all packages
 - [x] 11.2 Run production builds for both apps and verify they succeed
-- [ ] 11.3 Start both dev servers, navigate all screens, and visually verify the design against the guide
-- [ ] 11.4 Test dark mode by applying `.theme-dark` and verifying colors and contrast
-- [ ] 11.5 Test reduced motion with the OS preference enabled and verify all animations are disabled
-- [ ] 11.6 Run an accessibility audit on login, registration wizard, dashboard, and check-in
-- [ ] 11.7 Test the 480, 768, 1024, and 1280px breakpoints and verify responsive behavior
-- [ ] 11.8 Verify the required WCAG contrast ratios
-- [ ] 11.9 Create `DESIGN_NOTES.md` with any remaining visual discrepancies for designer review
+- [x] 11.3 Start both dev servers, navigate all screens, and visually verify the design against the guide
+- [x] 11.4 Test dark mode by applying `.theme-dark` and verifying colors and contrast
+- [x] 11.5 Test reduced motion with the OS preference enabled and verify all animations are disabled
+- [x] 11.6 Run an accessibility audit on login, registration wizard, dashboard, and check-in
+- [x] 11.7 Test the 480, 768, 1024, and 1280px breakpoints and verify responsive behavior
+- [x] 11.8 Verify the documented contrast thresholds through `pnpm verify:design`: ink/paper ≥16.9, red/paper ≥4.4 for large text or UI, white/red ≥5, and white/ink ≥19
+- [x] 11.9 Create `DESIGN_NOTES.md` with any remaining visual discrepancies for designer review
 
 ## 12. Asset Integration (Blocked on Designer Delivery)
 

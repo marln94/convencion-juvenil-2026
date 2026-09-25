@@ -8,7 +8,7 @@
 @import "@convencion/ui/styles/a11y.css";
 @source "../../../packages/ui/src";
 
-@theme {
+@theme inline {
   --color-bg: var(--color-bg);
   --color-text: var(--color-text);
   --color-accent: var(--color-accent);
@@ -16,6 +16,12 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --radius: var(--radius);
+}
+
+.panel-shell .container {
+  width: min(100% - var(--gutter) * 2, var(--container));
+  max-width: var(--container);
+  margin-inline: auto;
 }
 
 .panel-main {

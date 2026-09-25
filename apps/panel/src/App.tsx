@@ -62,10 +62,10 @@ function Login({ alIngresar }: { alIngresar: () => void }) {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4" style={{ background: 'var(--color-bg)' }}>
+    <div className="flex min-h-dvh items-center justify-center bg-bg p-4 text-text">
       <Card className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <MarkNeq size="hero" aria-hidden={true} className="mx-auto mb-4" />
+          <MarkNeq aria-hidden={true} className="mx-auto mb-4 w-20" />
           <h1 className="t-solid text-3xl">Panel</h1>
           <p className="t-eyebrow mt-2">Convención Juvenil 2026</p>
         </div>
@@ -150,8 +150,8 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
   }))
 
   return (
-    <div className="flex min-h-dvh flex-col" style={{ background: 'var(--color-bg)' }}>
-      <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-5">
+    <div className="panel-shell flex min-h-dvh flex-col bg-bg text-text">
+      <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
         <div className="container flex h-14 items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <MarkNeq size="default" aria-hidden={true} className="text-[var(--color-accent)]" style={{ width: '28px', height: '28px' }} />
@@ -172,8 +172,8 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
           <Nav orientation="vertical" items={navItems} onNavigate={navegar} className="w-full" />
         </aside>
 
-        <main className="panel-main min-w-0 flex-1 px-5">
-          <div className="container py-6">{contenido[vista]}</div>
+        <main className="panel-main min-w-0 flex-1">
+          <div className="py-6">{contenido[vista]}</div>
         </main>
       </div>
 
@@ -206,7 +206,7 @@ export function App() {
 
   if (sesion === 'cargando') {
     return (
-      <div className="flex min-h-dvh items-center justify-center" style={{ background: 'var(--color-bg)' }}>
+      <div className="flex min-h-dvh items-center justify-center bg-bg text-text">
         <span style={{ color: 'var(--color-ink-soft)' }}>Cargando…</span>
       </div>
     )

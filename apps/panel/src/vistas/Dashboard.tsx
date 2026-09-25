@@ -2,7 +2,7 @@ import { ApiError } from '@convencion/api-client'
 import type { ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Alert, Button, Card, Input, Pill, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, Container, Input, Pill, Section, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { buscarEnIndice } from '../lib/indice'
 import { cargarParticipantes } from '../lib/participantes'
@@ -74,7 +74,8 @@ export function VistaDashboard() {
   const estadisticas = useMemo(() => calcularEstadisticas(todos), [todos])
 
   return (
-    <div className="container">
+    <Container>
+      <Section className="py-0">
       <VistaHeader
         titulo="Dashboard"
         descripcion="Resumen de inscripción y llegadas"
@@ -135,6 +136,7 @@ export function VistaDashboard() {
           </li>
         )}
       </ul>
-    </div>
+      </Section>
+    </Container>
   )
 }
