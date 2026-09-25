@@ -2,14 +2,7 @@ import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
 import type { Participante, ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import {
-  Alerta,
-  Boton,
-  Campo,
-  EncabezadoVista,
-  PillCheckIn,
-  PillPago
-} from '../componentes/ui'
+import { Alert, Button, Card, Input, Pill, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { agregarAlIndice, buscarEnIndice, obtenerDelIndice } from '../lib/indice'
@@ -23,7 +16,7 @@ function aResumen(participante: Participante): ResumenParticipante {
     nombre: participante.nombre,
     estadoPago: participante.estadoPago,
     equipoColor: participante.equipoColor,
-    checkIn: participante.checkIn
+    checkIn: participante.checkIn,
   }
 }
 
@@ -107,20 +100,21 @@ function Escaner({ alEscanear, pausado, showHint, cooldownMs = 500 }: EscanerPro
   }, [alEscanear, pausado, cooldown, cooldownMs])
 
   return (
-    <div className="relative aspect-video w-full rounded-2xl bg-slate-900 overflow-hidden">
+    <Card className="relative aspect-video overflow-hidden" style={{ background: 'var(--color-ink)' }}>
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
       />
       {pausado && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-2xl"
+          className="absolute inset-0 flex flex-col items-center justify-center rounded-lg"
           role="status"
           aria-live="polite"
           aria-label="Procesando código QR"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
         >
           <svg
-            className="animate-spin h-10 w-10 text-indigo-400"
+            className="animate-spin h-10 w-10 text-[var(--color-accent)]"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -141,11 +135,11 @@ function Escaner({ alEscanear, pausado, showHint, cooldownMs = 500 }: EscanerPro
             />
           </svg>
           {showHint && (
-            <p className="mt-2 text-sm text-white/80">Tardando más de lo esperado…</p>
+            <p className="mt-2 text-sm" style={{ color: 'var(--color-paper-light)' }}>Tardando más de lo esperado…</p>
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -241,24 +235,24 @@ export function VistaCheckin() {
   }, [])
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col gap-4">
-      <EncabezadoVista
+    <div className="container max-w-md">
+      <VistaHeader
         titulo="Check-in"
         descripcion="Escanea el gafete o busca por nombre"
         acciones={
           <div className="flex gap-2 no-print">
-            <Boton
-              variante={modo === 'escanear' ? 'principal' : 'secundario'}
+            <Button
+              variant={modo === 'escanear' ? 'primary' : 'outline'}
               onClick={() => setModo('escanear')}
             >
               Escanear
-            </Boton>
-            <Boton
-              variante={modo === 'buscar' ? 'principal' : 'secundario'}
+            </Button>
+            <Button
+              variant={modo === 'buscar' ? 'primary' : 'outline'}
               onClick={() => setModo('buscar')}
             >
               Buscar
-            </Boton>
+            </Button>
           </div>
         }
       />
@@ -274,18 +268,18 @@ export function VistaCheckin() {
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
             <div className="flex-1">
-              <Campo
-                etiqueta="Nombre"
+              <Input
+                label="Nombre"
                 placeholder="Buscar participante…"
                 value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                onChange={setBusqueda}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') void buscar()
                 }}
               />
             </div>
             <div className="flex items-end">
-              <Boton onClick={() => void buscar()}>Buscar</Boton>
+              <Button onClick={() => void buscar()}>Buscar</Button>
             </div>
           </div>
           <ul className="flex flex-col gap-2">
@@ -294,70 +288,83 @@ export function VistaCheckin() {
                 <button
                   type="button"
                   onClick={() => setParticipante(resultado)}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm hover:bg-slate-50"
+                  className="w-full text-left p-3"
+                  style={{
+                    border: '2px solid var(--color-border)',
+                    borderRadius: 'var(--radius)',
+                    background: 'var(--color-paper-light)',
+                  }}
                 >
-                  <span className="block font-semibold text-slate-900">{resultado.nombre}</span>
+                  <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>{resultado.nombre}</span>
                   <span className="mt-1 flex gap-2">
-                    <PillPago estadoPago={resultado.estadoPago} />
-                    <PillCheckIn checkIn={resultado.checkIn} />
+                    <Pill variant={resultado.estadoPago === 'pagado' ? 'green' : resultado.estadoPago === 'pendiente' ? 'amber' : 'red'}>
+                      {resultado.estadoPago === 'pagado' ? 'Pagado' : resultado.estadoPago === 'pendiente' ? 'Pendiente' : 'Rechazado'}
+                    </Pill>
+                    <Pill variant={resultado.checkIn ? 'green' : 'default'}>
+                      {resultado.checkIn ? 'Llegó' : 'No llegó'}
+                    </Pill>
                   </span>
                 </button>
               </li>
             ))}
-            {busqueda.trim() && resultados.length === 0 ? (
+            {busqueda.trim() && resultados.length === 0 && (
               <li>
-                <Alerta tipo="info">Sin coincidencias en los datos locales</Alerta>
+                <Alert variant="info">Sin coincidencias en los datos locales</Alert>
               </li>
-            ) : null}
+            )}
           </ul>
         </div>
       )}
 
       {desconocido ? (
-        <Alerta tipo="error">
+        <Alert variant="error">
           El código no corresponde a un participante (o no hay datos locales disponibles sin
           conexión).
-        </Alerta>
+        </Alert>
       ) : null}
 
       {participante ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print-area">
+        <Card className="print-area">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-lg font-bold text-slate-900">{participante.nombre}</p>
-              <p className="text-xs text-slate-500">{participante.participantId}</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>{participante.nombre}</p>
+              <p className="text-xs" style={{ color: 'var(--color-ink-soft)' }}>{participante.participantId}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <PillPago estadoPago={participante.estadoPago} />
-              <PillCheckIn checkIn={participante.checkIn} />
+              <Pill variant={participante.estadoPago === 'pagado' ? 'green' : participante.estadoPago === 'pendiente' ? 'amber' : 'red'}>
+                {participante.estadoPago === 'pagado' ? 'Pagado' : participante.estadoPago === 'pendiente' ? 'Pendiente' : 'Rechazado'}
+              </Pill>
+              <Pill variant={participante.checkIn ? 'green' : 'default'}>
+                {participante.checkIn ? 'Llegó' : 'No llegó'}
+              </Pill>
             </div>
           </div>
           {participante.estadoPago !== 'pagado' ? (
-            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-800">
+            <p className="mt-3 text-sm" style={{ background: 'var(--color-paper-light)', padding: '0.5rem', border: '2px solid var(--color-border)', borderRadius: 'var(--radius)', color: 'var(--color-text)' }}>
               {participante.estadoPago === 'pendiente'
                 ? 'Pago pendiente: se entrega banda sin bloquear.'
                 : 'Pago rechazado: se entrega banda sin bloquear.'}
             </p>
           ) : null}
           {!participante.checkIn ? (
-            <Boton
-              anchoCompleto
-              variante="exito"
+            <Button
+              fullWidth
+              variant="primary"
               className="mt-3 min-h-14 text-base"
               onClick={() => void registrarLlegada(participante)}
               disabled={procesando}
             >
               {procesando ? 'Registrando…' : 'Registrar llegada'}
-            </Boton>
+            </Button>
           ) : (
-            <p className="mt-3 text-center text-sm font-medium text-emerald-700">
+            <p className="mt-3 text-center text-sm font-medium" style={{ color: '#10B981' }}>
               ✓ Ya llegó
             </p>
           )}
-        </div>
+        </Card>
       ) : null}
 
-      {mensaje ? <Alerta tipo="exito">{mensaje}</Alerta> : null}
+      {mensaje ? <Alert variant="success">{mensaje}</Alert> : null}
     </div>
   )
 }

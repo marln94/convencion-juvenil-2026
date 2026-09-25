@@ -23,6 +23,9 @@ importers:
       '@convencion/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@convencion/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@zxing/browser':
         specifier: ^0.1.5
         version: 0.1.5(@zxing/library@0.21.3)
@@ -72,6 +75,9 @@ importers:
       '@convencion/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@convencion/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.3.0)
@@ -144,6 +150,28 @@ importers:
 
   packages/shared-types:
     devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/ui:
+    dependencies:
+      react:
+        specifier: ^19.1.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@convencion/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
       typescript:
         specifier: ^5.6.3
         version: 5.9.3

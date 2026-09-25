@@ -2,13 +2,7 @@ import { ApiError } from '@convencion/api-client'
 import type { BandejaPagosItem, EstadoPago } from '@convencion/shared-types'
 import { useCallback, useEffect, useState } from 'react'
 
-import {
-  Alerta,
-  Boton,
-  Campo,
-  EncabezadoVista,
-  Seleccion
-} from '../componentes/ui'
+import { Alert, Button, Card, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { agregarAlIndice } from '../lib/indice'
 
@@ -51,14 +45,14 @@ export function VistaPagos() {
       const resultado = await api.revisarPago({
         participantId: item.participantId,
         decision,
-        motivoRechazo: decision === 'rechazar' ? motivo.trim() || undefined : undefined
+        motivoRechazo: decision === 'rechazar' ? motivo.trim() || undefined : undefined,
       })
       await agregarAlIndice({
         participantId: item.participantId,
         nombre: item.nombre,
         estadoPago: resultado.participante.estadoPago,
         equipoColor: resultado.participante.equipoColor,
-        checkIn: resultado.participante.checkIn
+        checkIn: resultado.participante.checkIn,
       })
       setRechazando(null)
       setMotivo('')
@@ -75,57 +69,52 @@ export function VistaPagos() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <EncabezadoVista
+    <div className="container">
+      <VistaHeader
         titulo="Revisión de pagos"
         descripcion="Aprobá o rechazá los comprobantes"
         acciones={
-          <div className="w-44">
-            <Seleccion
-              etiqueta="Estado"
+          <div style={{ width: '176px' }}>
+            <Select
+              label="Estado"
               value={estado}
-              onChange={(e) => setEstado(e.target.value as EstadoPago)}
-            >
-              {ESTADOS.map((opcion) => (
-                <option key={opcion} value={opcion}>
-                  {opcion === 'pendiente'
-                    ? 'Pendientes'
-                    : opcion === 'pagado'
-                      ? 'Pagados'
-                      : 'Rechazados'}
-                </option>
-              ))}
-            </Seleccion>
+              onChange={(v) => setEstado(v as EstadoPago)}
+              options={[
+                ['pendiente', 'Pendientes'],
+                ['pagado', 'Pagados'],
+                ['rechazado', 'Rechazados'],
+              ]}
+            />
           </div>
         }
       />
 
       {error ? (
         <div className="mb-4">
-          <Alerta tipo="error">{error}</Alerta>
+          <Alert variant="error">{error}</Alert>
         </div>
       ) : null}
 
-      {cargando ? <Alerta tipo="info">Cargando bandeja…</Alerta> : null}
+      {cargando ? <Alert variant="info">Cargando bandeja…</Alert> : null}
 
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
-          <li key={item.participantId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <Card key={item.participantId}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="font-semibold text-slate-900">{item.nombre}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{item.nombre}</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-soft)' }}>
                   Registro el {new Date(item.fechaRegistro).toLocaleString('es-HN')}
                 </p>
                 {item.correo ? (
-                  <p className="text-sm text-slate-600">{item.correo}</p>
+                  <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>{item.correo}</p>
                 ) : null}
               </div>
               <a
                 href={item.vistaComprobanteUrl ?? '#'}
                 target="_blank"
                 rel="noreferrer"
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium ${item.vistaComprobanteUrl ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' : 'cursor-not-allowed bg-slate-100 text-slate-400'}`}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium ${item.vistaComprobanteUrl ? 'bg-[var(--color-accent)] text-white hover:opacity-90' : 'cursor-not-allowed bg-[var(--color-border)] text-[var(--color-ink-soft)]'}`}
                 aria-disabled={!item.vistaComprobanteUrl}
               >
                 Comprobante
@@ -134,15 +123,15 @@ export function VistaPagos() {
 
             {item.estadoPago === 'pendiente' ? (
               <div className="mt-3 flex flex-wrap items-center gap-2 no-print">
-                <Boton
-                  variante="exito"
+                <Button
+                  variant="primary"
                   disabled={procesando === item.participantId}
                   onClick={() => void decidir(item, 'aprobar')}
                 >
                   Aprobar
-                </Boton>
-                <Boton
-                  variante="peligro"
+                </Button>
+                <Button
+                  variant="outline"
                   disabled={procesando === item.participantId}
                   onClick={() => {
                     setRechazando(rechazando?.participantId === item.participantId ? null : item)
@@ -150,49 +139,49 @@ export function VistaPagos() {
                   }}
                 >
                   Rechazar
-                </Boton>
+                </Button>
               </div>
             ) : (
-              <p className="mt-2 text-sm font-medium text-slate-500">
+              <p className="mt-2 text-sm font-medium" style={{ color: 'var(--color-ink-soft)' }}>
                 {item.estadoPago === 'pagado' ? 'Pago aprobado' : 'Pago rechazado'}
               </p>
             )}
 
             {rechazando?.participantId === item.participantId ? (
               <div className="mt-3 flex flex-col gap-2 no-print">
-                <Campo
-                  etiqueta="Motivo del rechazo"
+                <Input
+                  label="Motivo del rechazo"
                   placeholder="Opcional pero recomendable"
                   value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
+                  onChange={setMotivo}
                 />
                 <div className="flex gap-2">
-                  <Boton
-                    variante="peligro"
+                  <Button
+                    variant="primary"
                     disabled={procesando === item.participantId}
                     onClick={() => void decidir(item, 'rechazar')}
                   >
                     Confirmar rechazo
-                  </Boton>
-                  <Boton
-                    variante="secundario"
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setRechazando(null)
                       setMotivo('')
                     }}
                   >
                     Cancelar
-                  </Boton>
+                  </Button>
                 </div>
               </div>
             ) : null}
-          </li>
+          </Card>
         ))}
-        {!cargando && items.length === 0 ? (
+        {!cargando && items.length === 0 && (
           <li>
-            <Alerta tipo="info">No hay comprobantes en este estado</Alerta>
+            <Alert variant="info">No hay comprobantes en este estado</Alert>
           </li>
-        ) : null}
+        )}
       </ul>
     </div>
   )

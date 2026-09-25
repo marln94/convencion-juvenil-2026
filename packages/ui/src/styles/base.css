@@ -1,0 +1,58 @@
+@import "tokens.css";
+
+@layer base {
+  @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800&family=Poiret+One&family=Sacramento&display=swap");
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background: var(--color-bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  p, ul, ol, blockquote, table, pre, hr {
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  img, svg {
+    display: block;
+    max-width: 100%;
+  }
+}

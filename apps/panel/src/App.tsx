@@ -2,7 +2,8 @@ import type { RolUsuario } from '@convencion/shared-types'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Alerta, Boton, Campo } from './componentes/ui'
+import { Alert, Button, Card, Input, Nav, Pill } from '@convencion/ui/components/ui'
+import { MarkNeq } from '@convencion/ui/components/decorative'
 import { cerrarSesion, iniciarSesion, obtenerSesion, type SesionPanel } from './lib/auth'
 import { useEstadoRed } from './lib/sincronizacion'
 import { VistaCheckin } from './vistas/Checkin'
@@ -24,13 +25,13 @@ const LANDING: Record<RolUsuario, VistaId> = {
 const VISTAS_ADMIN: readonly VistaId[] = TODAS
 const VISTAS_STAFF: readonly VistaId[] = ['checkin', 'registro-insitu']
 
-const NAV: { id: VistaId; etiqueta: string; soloAdmin: boolean }[] = [
-  { id: 'checkin', etiqueta: 'Check-in', soloAdmin: false },
-  { id: 'registro-insitu', etiqueta: 'In situ', soloAdmin: false },
-  { id: 'dashboard', etiqueta: 'Dashboard', soloAdmin: true },
-  { id: 'pagos', etiqueta: 'Pagos', soloAdmin: true },
-  { id: 'equipos', etiqueta: 'Equipos', soloAdmin: true }
-]
+const NAV_ITEMS = [
+  { id: 'checkin', label: 'Check-in', adminOnly: false },
+  { id: 'registro-insitu', label: 'In situ', adminOnly: false },
+  { id: 'dashboard', label: 'Dashboard', adminOnly: true },
+  { id: 'pagos', label: 'Pagos', adminOnly: true },
+  { id: 'equipos', label: 'Equipos', adminOnly: true },
+] as const
 
 function leerVista(): VistaInicial {
   const fragmento = window.location.hash.replace(/^#\/?/, '')
@@ -61,36 +62,41 @@ function Login({ alIngresar }: { alIngresar: () => void }) {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-slate-100 p-4">
-      <form
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm"
-        onSubmit={(e) => {
-          e.preventDefault()
-          void enviar()
-        }}
-      >
-        <h1 className="text-2xl font-bold text-slate-900">Panel</h1>
-        <p className="mb-5 text-sm text-slate-500">Convención Juvenil 2026</p>
-        <div className="flex flex-col gap-4">
-          <Campo
-            etiqueta="Usuario"
+    <div className="flex min-h-dvh items-center justify-center p-4" style={{ background: 'var(--color-bg)' }}>
+      <Card className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <MarkNeq size="hero" aria-hidden={true} className="mx-auto mb-4" />
+          <h1 className="t-solid text-3xl">Panel</h1>
+          <p className="t-eyebrow mt-2">Convención Juvenil 2026</p>
+        </div>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void enviar()
+          }}
+        >
+          <Input
+            label="Usuario"
             value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
+            onChange={setUsuario}
             autoComplete="username"
+            required
           />
-          <Campo
-            etiqueta="Contraseña"
+          <Input
+            label="Contraseña"
             type="password"
             value={clave}
-            onChange={(e) => setClave(e.target.value)}
+            onChange={setClave}
             autoComplete="current-password"
+            required
           />
-          {error ? <Alerta tipo="error">{error}</Alerta> : null}
-          <Boton anchoCompleto disabled={enviando}>
+          {error && <Alert variant="error">{error}</Alert>}
+          <Button variant="primary" fullWidth disabled={enviando}>
             {enviando ? 'Ingresando…' : 'Ingresar'}
-          </Boton>
-        </div>
-      </form>
+          </Button>
+        </form>
+      </Card>
     </div>
   )
 }
@@ -99,31 +105,15 @@ function IndicadorConexion() {
   const { enLinea, sincronizando, pendientes } = useEstadoRed()
 
   if (!enLinea) {
-    return (
-      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-        Sin conexión
-      </span>
-    )
+    return <Pill variant="amber">Sin conexión</Pill>
   }
   if (sincronizando) {
-    return (
-      <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-        Sincronizando…
-      </span>
-    )
+    return <Pill variant="default">Sincronizando…</Pill>
   }
   if (pendientes > 0) {
-    return (
-      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-        {pendientes} sin sincronizar
-      </span>
-    )
+    return <Pill variant="amber">{pendientes} sin sincronizar</Pill>
   }
-  return (
-    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-      En línea
-    </span>
-  )
+  return <Pill variant="green">En línea</Pill>
 }
 
 function Panel({ sesion }: { sesion: SesionPanel }) {
@@ -137,8 +127,8 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
       : LANDING[sesion.rol]
   })
 
-  const navegar = useCallback((destino: VistaId) => {
-    setVista(destino)
+  const navegar = useCallback((destino: string) => {
+    setVista(destino as VistaId)
     window.location.hash = `/${destino}`
   }, [])
 
@@ -148,48 +138,41 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
       pagos: <VistaPagos />,
       equipos: <VistaEquipos />,
       checkin: <VistaCheckin />,
-      'registro-insitu': <VistaRegistroInsitu />
+      'registro-insitu': <VistaRegistroInsitu />,
     }),
     []
   )
 
+  const navItems = NAV_ITEMS.filter((item) => administrador || !item.adminOnly).map((item) => ({
+    id: item.id,
+    label: item.label,
+    current: vista === item.id,
+  }))
+
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-100">
-      <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-4">
-          <span className="font-bold text-slate-900">Panel</span>
-          <div className="flex items-center gap-2">
+    <div className="flex min-h-dvh flex-col" style={{ background: 'var(--color-bg)' }}>
+      <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+        <div className="container flex h-14 items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <MarkNeq size="default" aria-hidden={true} className="text-[var(--color-accent)]" style={{ width: '28px', height: '28px' }} />
+            <span className="t-solid text-xl">Panel</span>
+          </div>
+          <div className="flex items-center gap-3">
             <IndicadorConexion />
-            <span className="hidden text-sm text-slate-500 sm:inline">{sesion.username}</span>
-            <button
-              type="button"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
-              onClick={() => void cerrarSesion()}
-            >
+            <span className="hidden text-sm sm:inline" style={{ color: 'var(--color-ink-soft)' }}>{sesion.username}</span>
+            <Button variant="outline" size="sm" onClick={() => void cerrarSesion()}>
               Salir
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-4 md:py-6">
-        <div className="mx-auto w-full max-w-5xl">{contenido[vista]}</div>
+      <main className="flex-1">
+        <div className="container py-6">{contenido[vista]}</div>
       </main>
 
-      <nav className="no-print sticky bottom-0 z-10 border-t border-slate-200 bg-white md:static md:border-b md:border-t-0">
-        <ul className="mx-auto flex w-full max-w-5xl overflow-x-auto">
-          {NAV.filter((item) => administrador || !item.soloAdmin).map((item) => (
-            <li key={item.id} className="flex-1">
-              <button
-                type="button"
-                onClick={() => navegar(item.id)}
-                className={`w-full min-h-12 px-2 text-sm font-medium transition-colors ${vista === item.id ? 'border-b-2 border-indigo-600 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                {item.etiqueta}
-              </button>
-            </li>
-          ))}
-        </ul>
+      <nav className="no-print md:static" aria-label="Navegación principal">
+        <Nav items={navItems} onNavigate={navegar} />
       </nav>
     </div>
   )
@@ -214,8 +197,8 @@ export function App() {
 
   if (sesion === 'cargando') {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-slate-100">
-        <span className="text-slate-500">Cargando…</span>
+      <div className="flex min-h-dvh items-center justify-center" style={{ background: 'var(--color-bg)' }}>
+        <span style={{ color: 'var(--color-ink-soft)' }}>Cargando…</span>
       </div>
     )
   }

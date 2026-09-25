@@ -4,6 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
 
+import { Alert, Button, Card, CheckboxGroup, Input, Select, StepIndicator, VistaHeader, Hero, MarkNeq, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
 import { canvasAFile, componerGafete, descargarCanvas, slugDeNombre } from './lib/gafete'
@@ -61,11 +62,11 @@ const REGIONES: [string, string][] = [
   ['13', 'Región 13 - Danlí 2'],
 ]
 
-const DIAS_ASISTENCIA: [string, string][] = [
-  ['jueves-24', 'Jueves 24 dic'],
-  ['viernes-25', 'Viernes 25 dic'],
-  ['sabado-26', 'Sábado 26 dic'],
-  ['domingo-27', 'Domingo 27 dic'],
+const DIAS_ASISTENCIA_OPTIONS = [
+  { value: 'jueves-24', label: 'Jueves 24' },
+  { value: 'viernes-25', label: 'Viernes 25' },
+  { value: 'sabado-26', label: 'Sábado 26' },
+  { value: 'domingo-27', label: 'Domingo 27' },
 ]
 
 const ROLES: [string, string][] = [
@@ -74,241 +75,8 @@ const ROLES: [string, string][] = [
   ['nexo', 'Nexo'],
 ]
 
-const CAMPOS_FORMULARIO: (keyof DatosFormulario)[] = [
-  'nombre',
-  'contacto',
-  'correo',
-  'localidad',
-  'region',
-  'edad',
-  'diasAsistencia',
-  'rol'
-]
-
 type CamposTocados = Partial<Record<keyof DatosFormulario, boolean>>
 type ErroresFormulario = Partial<Record<keyof DatosFormulario, string>>
-
-function Campo({
-  etiqueta,
-  valor,
-  onChange,
-  onBlur,
-  requerido = false,
-  tipo = 'text',
-  placeholder,
-  error,
-  min
-}: {
-  etiqueta: string
-  valor: string
-  onChange: (valor: string) => void
-  onBlur?: () => void
-  requerido?: boolean
-  tipo?: string
-  placeholder?: string
-  error?: string
-  min?: string
-}) {
-  return (
-    <label className="block">
-      <span className="block text-sm font-medium text-slate-700">
-        {etiqueta}
-        {requerido && <span className="text-red-500"> *</span>}
-      </span>
-<input
-              type={tipo}
-              value={valor}
-              placeholder={placeholder}
-              min={min}
-              onChange={(evento) => onChange(evento.target.value)}
-              onBlur={onBlur}
-              aria-invalid={Boolean(error)}
-              className={
-                'mt-1 w-full min-h-11 rounded-lg border px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-1 ' +
-                (error
-                  ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-                  : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500')
-              }
-            />
-      {error && (
-        <span role="alert" className="mt-1 block text-sm text-red-600">
-          {error}
-        </span>
-      )}
-    </label>
-  )
-}
-
-function Select({
-  etiqueta,
-  valor,
-  onChange,
-  onBlur,
-  requerido = false,
-  opciones,
-  placeholder,
-  error
-}: {
-  etiqueta: string
-  valor: string
-  onChange: (valor: string) => void
-  onBlur?: () => void
-  requerido?: boolean
-  opciones: readonly [string, string][]
-  placeholder?: string
-  error?: string
-}) {
-  return (
-    <label className="block">
-      <span className="block text-sm font-medium text-slate-700">
-        {etiqueta}
-        {requerido && <span className="text-red-500"> *</span>}
-      </span>
-      <select
-        value={valor}
-        onChange={(evento) => onChange(evento.target.value)}
-        onBlur={onBlur}
-        aria-invalid={Boolean(error)}
-        className={
-          'mt-1 w-full min-h-11 rounded-lg border px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-1 ' +
-          (error
-            ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-            : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500')
-        }
-      >
-        <option value="">{placeholder ?? 'Seleccioná una opción'}</option>
-        {opciones.map(([value, label]) => (
-          <option key={value} value={value}>{label}</option>
-        ))}
-      </select>
-      {error && (
-        <span role="alert" className="mt-1 block text-sm text-red-600">
-          {error}
-        </span>
-      )}
-    </label>
-  )
-}
-
-function CheckboxGroup({
-  etiqueta,
-  valores,
-  onChange,
-  onBlur,
-  requerido = false,
-  opciones,
-  error
-}: {
-  etiqueta: string
-  valores: string[]
-  onChange: (valores: string[]) => void
-  onBlur?: () => void
-  requerido?: boolean
-  opciones: readonly [string, string][]
-  error?: string
-}) {
-  const toggle = (valor: string) => {
-    const nuevos = valores.includes(valor)
-      ? valores.filter((v) => v !== valor)
-      : [...valores, valor]
-    onChange(nuevos)
-  }
-
-  return (
-    <fieldset className="border rounded-lg p-4">
-      <legend className="text-sm font-medium text-slate-700 mb-3">
-        {etiqueta}
-        {requerido && <span className="text-red-500"> *</span>}
-      </legend>
-      <div className="flex flex-wrap gap-4">
-        {opciones.map(([value, label]) => (
-          <label key={value} className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={valores.includes(value)}
-              onChange={() => toggle(value)}
-              className="size-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-sm text-slate-900">{label}</span>
-          </label>
-        ))}
-      </div>
-      {error && (
-        <span role="alert" className="mt-2 block text-sm text-red-600">
-          {error}
-        </span>
-      )}
-    </fieldset>
-  )
-}
-
-function Boton({
-  children,
-  onClick,
-  tipo = 'button',
-  deshabilitado = false,
-  principal = false,
-  className = ''
-}: {
-  children: React.ReactNode
-  onClick?: () => void
-  tipo?: 'button' | 'submit'
-  deshabilitado?: boolean
-  principal?: boolean
-  className?: string
-}) {
-  return (
-    <button
-      type={tipo}
-      onClick={onClick}
-      disabled={deshabilitado}
-      className={
-        'min-h-11 w-full whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors sm:w-auto ' +
-        (principal
-          ? 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300'
-          : 'border border-slate-300 text-slate-700 hover:bg-slate-50') + ' ' + className
-      }
-    >
-      {children}
-    </button>
-  )
-}
-
-function Alerta({ mensaje }: { mensaje: string }) {
-  return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-      {mensaje}
-    </div>
-  )
-}
-
-function IndicadorPasos({ pasoActual }: { pasoActual: Paso }) {
-  const idx = PASOS_CONFIG.findIndex((p) => p.id === pasoActual)
-  if (idx < 0) return null
-  
-  const progressPercent = (idx / (PASOS_CONFIG.length - 1)) * 100
-  
-  return (
-    <div className="mb-6 w-full" role="progressbar" aria-valuenow={idx + 1} aria-valuemin={1} aria-valuemax={PASOS_CONFIG.length}>
-      <div className="relative flex justify-between items-start w-full">
-        <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200" aria-hidden="true">
-          <div 
-            className="h-full bg-indigo-600 transition-all duration-300 rounded" 
-            style={{ width: `${progressPercent}%` }} 
-          />
-        </div>
-        {PASOS_CONFIG.map((p, i) => (
-          <div key={p.id} className="flex flex-col items-center relative z-10">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${i <= idx ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
-              {i + 1}
-            </div>
-            <span className="text-xs font-medium text-slate-500 mt-1 text-center whitespace-nowrap">{p.titulo}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export function App() {
   const [paso, setPaso] = useState<Paso>('bienvenida')
@@ -388,7 +156,7 @@ export function App() {
         case 'diasAsistencia': {
           const v = datos.diasAsistencia
           if (!v || v.length === 0) return 'Seleccioná al menos un día de asistencia'
-          if (!v.every((d) => DIAS_ASISTENCIA.some(([dia]) => dia === d))) return 'Día de asistencia inválido'
+          if (!v.every((d) => DIAS_ASISTENCIA_OPTIONS.some((dia) => dia.value === d))) return 'Día de asistencia inválido'
           return undefined
         }
         case 'rol': {
@@ -451,7 +219,7 @@ export function App() {
     }
     const lienzo = await componerGafete(qrCanvasRef.current, {
       nombre: resultado.participante.nombre,
-      participantId: resultado.participante.participantId
+      participantId: resultado.participante.participantId,
     })
     const nombreArchivo = `gafete-${slugDeNombre(resultado.participante.nombre)}.png`
     const archivo = await canvasAFile(lienzo, nombreArchivo)
@@ -490,7 +258,7 @@ export function App() {
     try {
       const solicitud = await api.solicitarComprobanteUpload({
         contentType,
-        nombreArchivo: seleccionado.name
+        nombreArchivo: seleccionado.name,
       })
       await subirComprobante(solicitud, seleccionado)
       setAdjunto({ s3Key: solicitud.s3Key, contentType })
@@ -520,13 +288,13 @@ export function App() {
         diasAsistencia: datos.diasAsistencia,
         rol: datos.rol,
         tipoRegistro: 'online',
-        comprobante: adjunto
+        comprobante: adjunto,
       })
       setResultado(respuesta)
       setPaso('confirmacion')
     } catch (error) {
       setErrorApi(
-        error instanceof ApiError ? error.message : 'No se pudo enviar el registro. Intentá nuevamente.'
+        error instanceof ApiError ? error.message : 'No se pudo enviar el registro. Intentá nuevamente.',
       )
     } finally {
       setEnviando(false)
@@ -535,175 +303,263 @@ export function App() {
 
   return (
     <Fragment>
-      <div className="min-h-screen bg-slate-100 text-slate-900">
-        <header className="no-print border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-2xl px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Inscripción en línea</p>
-            <h1 className="text-xl font-bold">{NOMBRE_CONVENCION}</h1>
-          </div>
+      <div className="min-h-screen paper-noise" style={{ background: 'var(--color-bg)' }}>
+        <header className="no-print border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+          <Container>
+            <div className="py-4">
+              <p className="t-eyebrow text-sm" style={{ color: 'var(--color-accent)' }}>Inscripción en línea</p>
+              <h1 className="t-solid text-2xl">{NOMBRE_CONVENCION}</h1>
+            </div>
+          </Container>
         </header>
 
-        <main className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
-          <Fragment>
-            {paso === 'bienvenida' && (
-              <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6 text-center">
-                <div className="mx-auto max-w-lg">
-                  <h2 className="text-xl font-semibold text-slate-900">¡Paz!</h2>
-                  <p className="mt-4 text-slate-600 leading-relaxed">
-                    Tomaste una gran decisión al iniciar la inscripción, te prometemos que no te arrepentirás. Juntos viviremos unos días especiales en la presencia de Dios.
-                  </p>
+        <main>
+          <Container>
+            <Fragment>
+              {paso === 'bienvenida' && (
+                <Hero className="relative py-12">
+                  <div className="text-center">
+                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-8" aria-label="Muy pronto">
+                      <span className="t-outline">MUY PRONTO</span>
+                      <span className="t-solid">MUY PRONTO</span>
+                      <span className="t-outline">MUY PRONTO</span>
+                      <span className="t-solid">MUY PRONTO</span>
+                    </div>
+                    <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter" />
+                    <Brush position="tr" className="animate-brush-fade" />
+                    <Brush position="bl" className="animate-brush-fade" />
+                  </div>
                   <div className="mt-8">
-                    <Boton principal onClick={iniciarWizard} className="w-full sm:w-auto">
+                    <Button variant="primary" onClick={iniciarWizard} className="w-full sm:w-auto">
                       Comenzar inscripción
-                  </Boton>
-                </div>
-              </div>
-            </section>
-          )}
+                    </Button>
+                  </div>
+                </Hero>
+              )}
 
-          {paso !== 'bienvenida' && paso !== 'confirmacion' && (
-            <>
-              <IndicadorPasos pasoActual={paso} />
+              {paso !== 'bienvenida' && paso !== 'confirmacion' && (
+                <>
+                  <StepIndicator current={pasoIndex + 1} total={PASOS_CONFIG.length} labels={PASOS_CONFIG.map(p => p.titulo)} />
 
-              {PASOS_CONFIG.map((config) => (
-                config.id === paso && (
-                  <section key={config.id} className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-                    <h2 className="text-lg font-semibold">{config.titulo}</h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {config.id === 'identidad' && 'Completá tu nombre, rol y edad.'}
-                      {config.id === 'ubicacion' && 'Completá tu ubicación.'}
-                      {config.id === 'asistencia' && 'Seleccioná los días que asistirás.'}
-                      {config.id === 'contacto' && 'Completá tu contacto (opcional).'}
-                      {config.id === 'comprobante' && 'Subí el comprobante de pago.'}
-                    </p>
-
-                    {config.id !== 'comprobante' && (
-                      <form onSubmit={siguientePaso} className="mt-5 space-y-4 no-print">
-                        {config.campos.map((campo) => (
-                          <Fragment key={campo}>
-                            {campo === 'nombre' && (
-                              <Campo etiqueta="Nombre" valor={datos.nombre} onChange={actualizar('nombre')} onBlur={() => tocar('nombre')} requerido placeholder="Nombre y apellido" error={errorDe('nombre')} />
-                            )}
-                            {campo === 'rol' && (
-                              <Select etiqueta="Rol" valor={datos.rol} onChange={actualizar('rol')} onBlur={() => tocar('rol')} requerido opciones={ROLES} placeholder="Seleccioná un rol" error={errorDe('rol')} />
-                            )}
-                            {campo === 'localidad' && (
-                              <Campo etiqueta="Localidad" valor={datos.localidad} onChange={actualizar('localidad')} onBlur={() => tocar('localidad')} requerido placeholder="Ubicación de tu iglesia" error={errorDe('localidad')} />
-                            )}
-                            {campo === 'region' && (
-                              <Select etiqueta="Región" valor={datos.region} onChange={actualizar('region')} onBlur={() => tocar('region')} requerido opciones={REGIONES} placeholder="Seleccioná una región" error={errorDe('region')} />
-                            )}
-                            {campo === 'edad' && (
-                              <Campo etiqueta="Edad" valor={datos.edad} onChange={actualizar('edad')} onBlur={() => tocar('edad')} requerido tipo="number" min="1" placeholder="Edad en años" error={errorDe('edad')} />
-                            )}
-                            {campo === 'diasAsistencia' && (
-                              <CheckboxGroup etiqueta="Días de asistencia" valores={datos.diasAsistencia} onChange={actualizar('diasAsistencia')} onBlur={() => tocar('diasAsistencia')} requerido opciones={DIAS_ASISTENCIA} error={errorDe('diasAsistencia')} />
-                            )}
-                            {campo === 'contacto' && (
-                              <Campo etiqueta="Teléfono (opcional)" valor={datos.contacto} onChange={actualizar('contacto')} onBlur={() => tocar('contacto')} placeholder="8877-9955" error={errorDe('contacto')} />
-                            )}
-                            {campo === 'correo' && (
-                              <Campo etiqueta="Correo (opcional)" valor={datos.correo} onChange={actualizar('correo')} onBlur={() => tocar('correo')} tipo="email" placeholder="para recibir novedades" error={errorDe('correo')} />
-                            )}
-                          </Fragment>
-                        ))}
-                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-                          {pasoIndex > 0 && <Boton onClick={pasoAnterior}>Volver</Boton>}
-                          <Boton tipo="submit" principal>
-                            {esUltimoPasoDatos ? 'Continuar al comprobante' : 'Continuar'}
-                          </Boton>
+                  {PASOS_CONFIG.map((config) =>
+                    config.id === paso && (
+                      <Section key={config.id} className="mb-8">
+                        <div className="mb-6">
+                          <h2 className="t-solid text-2xl">{config.titulo}</h2>
+                          <p className="t-eyebrow mt-1">
+                            {config.id === 'identidad' && 'Completá tu nombre, rol y edad.'}
+                            {config.id === 'ubicacion' && 'Completá tu ubicación.'}
+                            {config.id === 'asistencia' && 'Seleccioná los días que asistirás.'}
+                            {config.id === 'contacto' && 'Completá tu contacto (opcional).'}
+                            {config.id === 'comprobante' && 'Subí el comprobante de pago.'}
+                          </p>
                         </div>
-                      </form>
-                    )}
 
-                    {config.id === 'comprobante' && (
-                      <>
-                        {errorApi && <div className="mt-4"><Alerta mensaje={errorApi} /></div>}
-                        {errorSubida && <div className="mt-4"><Alerta mensaje={errorSubida} /></div>}
-                        {adjunto && !errorApi && !errorSubida && (
-                          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                            Comprobante subido correctamente: {archivo?.name}
-                          </div>
+                        {config.id !== 'comprobante' && (
+                          <form onSubmit={siguientePaso} className="space-y-4 no-print">
+                            {config.campos.map((campo) => (
+                              <Fragment key={campo}>
+                                {campo === 'nombre' && (
+                                  <Input
+                                    label="Nombre"
+                                    value={datos.nombre}
+                                    onChange={actualizar('nombre')}
+                                    onBlur={() => tocar('nombre')}
+                                    required
+                                    placeholder="Nombre y apellido"
+                                    error={errorDe('nombre')}
+                                  />
+                                )}
+                                {campo === 'rol' && (
+                                  <Select
+                                    label="Rol"
+                                    value={datos.rol}
+                                    onChange={actualizar('rol')}
+                                    onBlur={() => tocar('rol')}
+                                    required
+                                    options={ROLES}
+                                    placeholder="Seleccioná un rol"
+                                    error={errorDe('rol')}
+                                  />
+                                )}
+                                {campo === 'localidad' && (
+                                  <Input
+                                    label="Localidad"
+                                    value={datos.localidad}
+                                    onChange={actualizar('localidad')}
+                                    onBlur={() => tocar('localidad')}
+                                    required
+                                    placeholder="Ubicación de tu iglesia"
+                                    error={errorDe('localidad')}
+                                  />
+                                )}
+                                {campo === 'region' && (
+                                  <Select
+                                    label="Región"
+                                    value={datos.region}
+                                    onChange={actualizar('region')}
+                                    onBlur={() => tocar('region')}
+                                    required
+                                    options={REGIONES}
+                                    placeholder="Seleccioná una región"
+                                    error={errorDe('region')}
+                                  />
+                                )}
+                                {campo === 'edad' && (
+                                  <Input
+                                    label="Edad"
+                                    value={datos.edad}
+                                    onChange={actualizar('edad')}
+                                    onBlur={() => tocar('edad')}
+                                    required
+                                    type="number"
+                                    min="1"
+                                    placeholder="Edad en años"
+                                    error={errorDe('edad')}
+                                  />
+                                )}
+                                {campo === 'diasAsistencia' && (
+                                  <CheckboxGroup
+                                    label="Días de asistencia"
+                                    value={datos.diasAsistencia}
+                                    onChange={actualizar('diasAsistencia')}
+                                    onBlur={() => tocar('diasAsistencia')}
+                                    required
+                                    options={DIAS_ASISTENCIA_OPTIONS}
+                                    error={errorDe('diasAsistencia')}
+                                  />
+                                )}
+                                {campo === 'contacto' && (
+                                  <Input
+                                    label="Teléfono (opcional)"
+                                    value={datos.contacto}
+                                    onChange={actualizar('contacto')}
+                                    onBlur={() => tocar('contacto')}
+                                    placeholder="8877-9955"
+                                    error={errorDe('contacto')}
+                                  />
+                                )}
+                                {campo === 'correo' && (
+                                  <Input
+                                    label="Correo (opcional)"
+                                    value={datos.correo}
+                                    onChange={actualizar('correo')}
+                                    onBlur={() => tocar('correo')}
+                                    type="email"
+                                    placeholder="para recibir novedades"
+                                    error={errorDe('correo')}
+                                  />
+                                )}
+                              </Fragment>
+                            ))}
+                            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                              {pasoIndex > 0 && <Button variant="outline" onClick={pasoAnterior}>Volver</Button>}
+                              <Button type="submit" variant="primary">
+                                {esUltimoPasoDatos ? 'Continuar al comprobante' : 'Continuar'}
+                              </Button>
+                            </div>
+                          </form>
                         )}
 
-                        <div className="mt-5 no-print">
-                          <label className="block cursor-pointer rounded-xl border-2 border-dashed border-slate-300 px-5 py-8 text-center text-slate-500 transition-colors hover:border-indigo-400 hover:bg-indigo-50">
-                            <span className="block text-sm font-medium">
-                              {subiendo ? 'Subiendo…' : adjunto ? 'Reemplazar comprobante' : 'Seleccionar archivo'}
-                            </span>
-                            <span className="mt-1 block text-xs">
-                              Imagen PNG o JPG, o PDF (máx. 5 MB)
-                            </span>
-                            <input
-                              type="file"
-                              accept={['image/png', 'image/jpeg', 'application/pdf'].join(',')}
-                              disabled={subiendo}
-                              onChange={seleccionarArchivo}
-                              className="hidden"
-                            />
-                          </label>
-                        </div>
+                        {config.id === 'comprobante' && (
+                          <>
+                            {errorApi && <div className="mb-4"><Alert variant="error">{errorApi}</Alert></div>}
+                            {errorSubida && <div className="mb-4"><Alert variant="error">{errorSubida}</Alert></div>}
+                            {adjunto && !errorApi && !errorSubida && (
+                              <Alert variant="success" className="mb-4">
+                                Comprobante subido correctamente: {archivo?.name}
+                              </Alert>
+                            )}
 
-                        <div className="mt-6 flex flex-col-reverse gap-3 no-print sm:flex-row sm:justify-end">
-                          <Boton onClick={() => { setPaso('contacto'); resetErrores() }}>Volver</Boton>
-                          <Boton principal onClick={enviarRegistro} deshabilitado={!adjunto || subiendo || enviando}>
-                            {enviando ? 'Enviando…' : 'Completar inscripción'}
-                          </Boton>
-                        </div>
-                      </>
-                    )}
-                  </section>
-                )
-              ))}
-            </>
-          )}
+                            <div className="mt-5 no-print">
+                              <label className="block cursor-pointer" style={{
+                                border: '2px dashed var(--color-border)',
+                                borderRadius: 'var(--radius)',
+                                padding: '2rem',
+                                textAlign: 'center',
+                                background: 'var(--color-paper)',
+                                color: 'var(--color-ink-soft)',
+                                transition: 'all 0.2s',
+                              }}>
+                                <span className="block text-sm font-medium" style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                                  {subiendo ? 'Subiendo…' : adjunto ? 'Reemplazar comprobante' : 'Seleccionar archivo'}
+                                </span>
+                                <span className="mt-1 block text-xs" style={{ color: 'var(--color-ink-soft)' }}>
+                                  Imagen PNG o JPG, o PDF (máx. 5 MB)
+                                </span>
+                                <input
+                                  type="file"
+                                  accept={['image/png', 'image/jpeg', 'application/pdf'].join(',')}
+                                  disabled={subiendo}
+                                  onChange={seleccionarArchivo}
+                                  className="hidden"
+                                />
+                              </label>
+                            </div>
 
-          {paso === 'confirmacion' && resultado && (
-            <section className="print-area rounded-2xl bg-white p-5 text-center shadow-sm sm:p-6">
-              <h2 className="text-lg font-semibold">¡Inscripción completada!</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Mostrá este código QR en el ingreso a la convención.
-              </p>
+                            <div className="mt-6 flex flex-col-reverse gap-3 no-print sm:flex-row sm:justify-end">
+                              <Button variant="outline" onClick={() => { setPaso('contacto'); resetErrores() }}>Volver</Button>
+                              <Button variant="primary" onClick={enviarRegistro} disabled={!adjunto || subiendo || enviando}>
+                                {enviando ? 'Enviando…' : 'Completar inscripción'}
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </Section>
+                    )
+                  )}
+                </>
+              )}
 
-              <div className="mx-auto mt-6 w-full max-w-[220px] rounded-xl border-2 border-slate-200 p-4">
-                <div className="aspect-square w-full">
-                  <QRCodeCanvas
-                    ref={qrCanvasRef}
-                    value={resultado.codigoQr}
-                    size={512}
-                    level="M"
-                    includeMargin
-                    style={{ width: '100%', height: '100%' }}
-                  />
-                </div>
-              </div>
+              {paso === 'confirmacion' && resultado && (
+                <Section className="print-area text-center">
+                  <h2 className="t-solid text-xl">¡Inscripción completada!</h2>
+                  <p className="t-eyebrow mt-1">Mostrá este código QR en el ingreso a la convención.</p>
 
-              <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm">
-                <p className="text-slate-500">Tu identificador</p>
-                <p className="font-mono text-base font-semibold text-slate-900">{resultado.participante.participantId}</p>
-              </div>
+                  <div className="mx-auto mt-6 w-full max-w-[90vw] sm:max-w-[320px] md:max-w-[360px]">
+                    <Card className="aspect-square flex items-center justify-center">
+                      <QRCodeCanvas
+                        ref={qrCanvasRef}
+                        value={resultado.codigoQr}
+                        size={512}
+                        level="M"
+                        includeMargin
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </Card>
+                  </div>
 
-              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Tu comprobante quedó <strong>pendiente de revisión</strong>. Si el pago se
-                rechaza, se te va a contactar por el medio indicado.
-              </div>
+                  <Card className="mt-5 text-sm">
+                    <p className="t-eyebrow">Tu identificador</p>
+                    <p className="font-mono font-semibold" style={{ color: 'var(--color-text)' }}>{resultado.participante.participantId}</p>
+                  </Card>
 
-              <div className="mt-6 flex flex-col gap-3 no-print sm:flex-row sm:justify-center">
-                <Boton principal onClick={compartirResultado}>
-                  {descargado ? 'Gafete descargado' : 'Guardar/Compartir'}
-                </Boton>
-                <Boton onClick={() => window.location.reload()}>Nueva inscripción</Boton>
-              </div>
-            </section>
-          )}
+                  <Alert variant="warning" className="mt-4">
+                    Tu comprobante quedó <strong>pendiente de revisión</strong>. Si el pago se
+                    rechaza, se te va a contactar por el medio indicado.
+                  </Alert>
 
-        </Fragment>
-      </main>
+                  <div className="mt-6 flex flex-col gap-3 no-print sm:flex-row sm:justify-center">
+                    <Button variant="primary" onClick={compartirResultado}>
+                      {descargado ? 'Gafete descargado' : 'Guardar/Compartir'}
+                    </Button>
+                    <Button variant="outline" onClick={() => window.location.reload()}>Nueva inscripción</Button>
+                  </div>
+                </Section>
+              )}
 
-      <footer className="no-print mx-auto max-w-2xl px-4 pb-8 text-center text-xs text-slate-400">
-        {NOMBRE_CONVENCION} · Inscripción en línea
-      </footer>
-    </div>
-      </Fragment>
+            </Fragment>
+          </Container>
+        </main>
+
+        <footer className="no-print mt-auto">
+          <Container>
+            <p className="text-center py-8 text-xs" style={{ color: 'var(--color-ink-soft)' }}>
+              {NOMBRE_CONVENCION} · Inscripción en línea
+            </p>
+          </Container>
+        </footer>
+      </div>
+    </Fragment>
   )
 }

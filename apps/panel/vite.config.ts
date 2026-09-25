@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => {
           name: 'Convención · Panel',
           short_name: 'Panel',
           description: 'Panel interno de la Convención Juvenil 2026',
-          theme_color: '#4f46e5',
-          background_color: '#f1f5f9',
+          theme_color: '#0A0A0A',
+          background_color: '#EDEDED',
           display: 'standalone',
           orientation: 'any',
           icons: [

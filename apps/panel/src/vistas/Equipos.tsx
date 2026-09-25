@@ -2,7 +2,7 @@ import { ApiError } from '@convencion/api-client'
 import type { EquiposAsignacionOutput, ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Alerta, Boton, EncabezadoVista } from '../componentes/ui'
+import { Alert, Button, Card, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { buscarEnIndice, actualizarEquiposEnIndice } from '../lib/indice'
 
@@ -102,62 +102,62 @@ export function VistaEquipos() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <EncabezadoVista
+    <div className="container max-w-3xl">
+      <VistaHeader
         titulo="Equipos"
         descripcion={asignacion?.bloqueado ? 'Asignación bloqueada' : 'Asignación por color'}
         acciones={
           <div className="flex flex-wrap gap-2">
-            <Boton onClick={() => void generar()} disabled={procesando || asignacion?.bloqueado}>
+            <Button onClick={() => void generar()} disabled={procesando || asignacion?.bloqueado}>
               {procesando ? 'Generando…' : 'Generar'}
-            </Boton>
-            <Boton variante="secundario" onClick={() => void bloquear()} disabled={bloqueando || asignacion?.bloqueado}>
+            </Button>
+            <Button variant="outline" onClick={() => void bloquear()} disabled={bloqueando || asignacion?.bloqueado}>
               {bloqueando ? 'Bloqueando…' : 'Bloquear'}
-            </Boton>
-            <Boton variante="secundario" onClick={exportarCsv} disabled={!asignacion}>
+            </Button>
+            <Button variant="outline" onClick={exportarCsv} disabled={!asignacion}>
               Exportar CSV
-            </Boton>
-            <Boton variante="secundario" onClick={() => window.print()} disabled={!asignacion}>
+            </Button>
+            <Button variant="outline" onClick={() => window.print()} disabled={!asignacion}>
               Imprimir
-            </Boton>
+            </Button>
           </div>
         }
       />
 
       {error ? (
         <div className="mb-4">
-          <Alerta tipo="error">{error}</Alerta>
+          <Alert variant="error">{error}</Alert>
         </div>
       ) : null}
 
-      {cargando ? <Alerta tipo="info">Cargando equipos…</Alerta> : null}
+      {cargando ? <Alert variant="info">Cargando equipos…</Alert> : null}
 
       {asignacion?.bloqueado ? (
         <div className="mb-4">
-          <Alerta tipo="aviso">La asignación está bloqueada y ya no se puede regenerar.</Alerta>
+          <Alert variant="warning">La asignación está bloqueada y ya no se puede regenerar.</Alert>
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {grupos.map(([color, ids]) => (
-          <div key={color} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <Card key={color}>
             <div className="flex items-center gap-2">
               <span
-                className="size-4 rounded-full border border-slate-300"
+                className="size-4 rounded-full border border-[var(--color-border)]"
                 style={{ backgroundColor: color }}
-                aria-hidden
+                aria-hidden="true"
               />
-              <h2 className="font-bold capitalize text-slate-900">{color}</h2>
-              <span className="ml-auto text-sm text-slate-500">{ids.length}</span>
+              <h2 className="font-bold capitalize" style={{ color: 'var(--color-text)' }}>{color}</h2>
+              <span className="ml-auto text-sm" style={{ color: 'var(--color-ink-soft)' }}>{ids.length}</span>
             </div>
-            <ul className="mt-3 max-h-48 overflow-y-auto text-sm text-slate-700">
+            <ul className="mt-3 max-h-48 overflow-y-auto text-sm" style={{ color: 'var(--color-text)' }}>
               {ids.map((participantId) => (
-                <li key={participantId} className="border-t border-slate-100 py-1">
+                <li key={participantId} className="border-t border-[var(--color-border)] py-1">
                   {nombreDe(nombres, participantId)}
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

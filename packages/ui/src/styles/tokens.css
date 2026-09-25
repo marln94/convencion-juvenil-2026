@@ -1,0 +1,59 @@
+@layer base {
+  :root {
+    /* Base Colors */
+    --color-paper: #EDEDED;
+    --color-paper-light: #FAFAFA;
+    --color-white: #FFFFFF;
+
+    /* Ink Colors */
+    --color-ink: #0A0A0A;
+    --color-ink-soft: #4A4A4A;
+    --color-ink-fade: #9A9A9A;
+
+    /* Red Accent Colors */
+    --color-red: #D90D0D;
+    --color-red-dark: #8E0B12;
+    --color-red-deep: #5C0A0F;
+
+    /* Semantic Color Aliases */
+    --color-bg: var(--color-paper);
+    --color-text: var(--color-ink);
+    --color-accent: var(--color-red);
+    --color-border: var(--color-ink);
+
+    /* Typography */
+    --font-display: "Poppins", "Montserrat", system-ui, sans-serif;
+    --font-fine: "Poiret One", "Poppins", sans-serif;
+    --font-script: "Sacramento", cursive;
+    --font-body: "Poppins", system-ui, sans-serif;
+
+    /* Fluid Type Scale */
+    --fs-hero: clamp(2.75rem, 9vw, 8rem);
+    --fs-h1: clamp(2.25rem, 6vw, 5rem);
+    --fs-h2: clamp(1.75rem, 4vw, 3rem);
+    --fs-h3: clamp(1.25rem, 2.5vw, 1.75rem);
+    --fs-date: clamp(1.5rem, 4vw, 3rem);
+    --fs-eyebrow: clamp(1rem, 2vw, 1.5rem);
+    --fs-body: 1rem;
+    --fs-small: 0.875rem;
+
+    /* Spacing & Layout */
+    --container: 1200px;
+    --gutter: clamp(1rem, 4vw, 3rem);
+    --space-1: 0.5rem;
+    --space-2: 1rem;
+    --space-3: 1.5rem;
+    --space-4: 2.5rem;
+    --space-5: 4rem;
+    --space-6: 7rem;
+    --radius: 0;
+
+    /* Dark Mode (optional, from Art 2) */
+  }
+
+  .theme-dark {
+    --color-bg: #0A0A0A;
+    --color-text: #EDEDED;
+    --color-border: #FFFFFF;
+  }
+}

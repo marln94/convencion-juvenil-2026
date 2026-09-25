@@ -1,0 +1,53 @@
+@layer components {
+  .container {
+    width: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+  }
+
+  .section {
+    padding-block: var(--space-6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero {
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .info-block {
+    text-align: right;
+    display: grid;
+    gap: 0.25rem;
+    justify-items: end;
+  }
+
+  .info-block .t-solid {
+    font-size: var(--fs-hero);
+  }
+
+  .info-block .t-outline {
+    font-size: var(--fs-h1);
+  }
+
+  @media (max-width: 768px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+
+    .info-block {
+      text-align: left;
+      justify-items: start;
+    }
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gutter);
+    align-items: start;
+  }
+}

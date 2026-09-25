@@ -2,7 +2,7 @@ import type { Participante, RegistrarParticipanteOutput } from '@convencion/shar
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 
-import { Alerta, Boton, Campo, EncabezadoVista, Seleccion } from '../componentes/ui'
+import { Alert, Button, Card, CheckboxGroup, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { agregarAlIndice } from '../lib/indice'
@@ -27,11 +27,11 @@ const REGIONES: [string, string][] = [
   ['13', 'Región 13 - Danlí 2'],
 ]
 
-const DIAS_ASISTENCIA: [string, string][] = [
-  ['jueves-24', 'Jueves 24 dic'],
-  ['viernes-25', 'Viernes 25 dic'],
-  ['sabado-26', 'Sábado 26 dic'],
-  ['domingo-27', 'Domingo 27 dic'],
+const DIAS_ASISTENCIA_OPTIONS = [
+  { value: 'jueves-24', label: 'Jueves 24 dic' },
+  { value: 'viernes-25', label: 'Viernes 25 dic' },
+  { value: 'sabado-26', label: 'Sábado 26 dic' },
+  { value: 'domingo-27', label: 'Domingo 27 dic' },
 ]
 
 const ROLES: [string, string][] = [
@@ -73,14 +73,13 @@ const INICIO: DatosFormulario = {
   rol: 'joven',
   esRegistroPorEncargado: false,
   encargadoNombre: '',
-  encargadoContacto: ''
+  encargadoContacto: '',
 }
 
 function validar(datos: DatosFormulario): string | null {
   if (!datos.nombre.trim()) return 'El nombre es obligatorio'
   if (contieneNumeros(datos.nombre)) return 'El nombre no puede contener números'
   if (datos.nombre.trim().split(/\s+/).length < 2) return 'El nombre debe incluir nombre y apellido'
-  // Contacto ahora es opcional
   if (datos.contacto.trim() && !validarContacto(datos.contacto.trim())) return 'El contacto debe ser un teléfono 8877-9955 o un correo válido'
   if (datos.correo.trim() && !PATRON_CORREO.test(datos.correo.trim())) return 'El correo es inválido'
   if (!datos.localidad.trim()) return 'La localidad es obligatoria'
@@ -90,7 +89,7 @@ function validar(datos: DatosFormulario): string | null {
   const edadNum = parseInt(datos.edad, 10)
   if (isNaN(edadNum) || edadNum < 1) return 'La edad debe ser un número positivo'
   if (!datos.diasAsistencia || datos.diasAsistencia.length === 0) return 'Seleccioná al menos un día de asistencia'
-  if (!datos.diasAsistencia.every((d) => DIAS_ASISTENCIA.some(([dia]) => dia === d))) return 'Día de asistencia inválido'
+  if (!datos.diasAsistencia.every((d) => DIAS_ASISTENCIA_OPTIONS.some((dia) => dia.value === d))) return 'Día de asistencia inválido'
   if (!datos.rol) return 'Seleccioná un rol válido'
   if (!ROLES.some(([r]) => r === datos.rol)) return 'Seleccioná un rol válido'
   if (
@@ -139,14 +138,14 @@ export function VistaRegistroInsitu() {
         esRegistroPorEncargado: datos.esRegistroPorEncargado,
         encargadoNombre: datos.encargadoNombre.trim() || undefined,
         encargadoContacto: datos.encargadoContacto.trim() || undefined,
-        tipoRegistro: 'in_situ' as const
+        tipoRegistro: 'in_situ' as const,
       }
       await encolarOperacion('registro_insitu', payload)
       await agregarAlIndice({
         participantId,
         nombre: payload.nombre,
         estadoPago: 'pagado',
-        checkIn: false
+        checkIn: false,
       })
       const sinConectar = !navigator.onLine
       if (!sinConectar) {
@@ -169,7 +168,7 @@ export function VistaRegistroInsitu() {
         tipoRegistro: 'in_situ',
         estadoPago: 'pagado',
         checkIn: false,
-        fechaRegistro: new Date().toISOString()
+        fechaRegistro: new Date().toISOString(),
       }
       setResultado({ participante, codigoQr: participantId })
       setDatos(INICIO)
@@ -180,121 +179,96 @@ export function VistaRegistroInsitu() {
 
   if (resultado) {
     return (
-      <div className="mx-auto w-full max-w-md">
-        <EncabezadoVista titulo="Registro in situ" descripcion="Participante creado" />
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm print-area">
-          <div className="text-center">
-            <p className="text-lg font-bold text-slate-900">{resultado.participante.nombre}</p>
-            <p className="text-sm text-slate-500">Registro confirmado · pago pagado</p>
+      <div className="container max-w-md">
+        <VistaHeader titulo="Registro in situ" descripcion="Participante creado" />
+        <Card className="flex flex-col items-center gap-4 print-area text-center">
+          <div>
+            <p className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>{resultado.participante.nombre}</p>
+            <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Registro confirmado · pago pagado</p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius)', padding: '0.75rem' }}>
             <QRCodeSVG value={resultado.codigoQr} size={220} level="M" />
           </div>
           {pendiente ? (
-            <Alerta tipo="aviso">
+            <Alert variant="warning">
               Sin conexión: el registro quedó en cola local y se sincronizará al volver la señal.
-            </Alerta>
+            </Alert>
           ) : (
-            <Alerta tipo="exito">Registro sincronizado con el servidor.</Alerta>
+            <Alert variant="success">Registro sincronizado con el servidor.</Alert>
           )}
-          <Boton
-            variante="secundario"
-            anchoCompleto
-            onClick={() => {
-              setResultado(null)
-              setPendiente(false)
-            }}
-          >
+          <Button variant="outline" fullWidth onClick={() => { setResultado(null); setPendiente(false) }}>
             Nuevo registro
-          </Boton>
-        </div>
+          </Button>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <EncabezadoVista
+    <div className="container max-w-md">
+      <VistaHeader
         titulo="Registro in situ"
         descripcion="Crea el participante al momento y genera su gafete"
       />
-      <form
-        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-        onSubmit={(e) => {
-          e.preventDefault()
-          void enviar()
-        }}
-      >
-        <Campo etiqueta="Nombre completo" value={datos.nombre} onChange={(e) => actualizar('nombre', e.target.value)} />
-        <Campo etiqueta="Contacto (teléfono 8877-1122 o correo)" value={datos.contacto} onChange={(e) => actualizar('contacto', e.target.value)} />
-        <Campo etiqueta="Correo (opcional)" value={datos.correo} onChange={(e) => actualizar('correo', e.target.value)} />
-        <Campo etiqueta="Localidad" value={datos.localidad} onChange={(e) => actualizar('localidad', e.target.value)} />
-        <Seleccion
-          etiqueta="Región"
-          value={datos.region}
-          onChange={(e) => actualizar('region', e.target.value)}
+      <Card>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void enviar()
+          }}
         >
-          <option value="">Seleccioná una región</option>
-          {REGIONES.map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </Seleccion>
-        <Campo etiqueta="Edad" value={datos.edad} onChange={(e) => actualizar('edad', e.target.value)} type="number" min="1" />
-        <fieldset className="border rounded-lg p-4">
-          <legend className="mb-3 block text-sm font-medium text-slate-700">Días de asistencia *</legend>
-          <div className="flex flex-wrap gap-4">
-            {DIAS_ASISTENCIA.map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={datos.diasAsistencia.includes(value)}
-                  onChange={(e) => {
-                    const nuevos = e.target.checked
-                      ? [...datos.diasAsistencia, value]
-                      : datos.diasAsistencia.filter((d) => d !== value)
-                    actualizar('diasAsistencia', nuevos)
-                  }}
-                  className="size-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-sm text-slate-900">{label}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <Seleccion
-          etiqueta="Rol"
-          value={datos.rol}
-          onChange={(e) => actualizar('rol', e.target.value as 'joven' | 'encargado' | 'nexo')}
-        >
-          <option value="">Seleccioná un rol</option>
-          {ROLES.map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </Seleccion>
-
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          <input
-            type="checkbox"
-            checked={datos.esRegistroPorEncargado}
-            onChange={(e) => actualizar('esRegistroPorEncargado', e.target.checked)}
-            className="size-5"
+          <Input label="Nombre completo" value={datos.nombre} onChange={(v) => actualizar('nombre', v)} required />
+          <Input label="Contacto (teléfono 8877-1122 o correo)" value={datos.contacto} onChange={(v) => actualizar('contacto', v)} />
+          <Input label="Correo (opcional)" value={datos.correo} onChange={(v) => actualizar('correo', v)} />
+          <Input label="Localidad" value={datos.localidad} onChange={(v) => actualizar('localidad', v)} required />
+          <Select
+            label="Región"
+            value={datos.region}
+            onChange={(v) => actualizar('region', v)}
+            options={REGIONES}
+            required
           />
-          Registro por encargado
-        </label>
+          <Input label="Edad" value={datos.edad} onChange={(v) => actualizar('edad', v)} type="number" min="1" required />
+          <CheckboxGroup
+            label="Días de asistencia"
+            options={DIAS_ASISTENCIA_OPTIONS}
+            value={datos.diasAsistencia}
+            onChange={(val) => actualizar('diasAsistencia', val)}
+            required
+          />
+          <Select
+            label="Rol"
+            value={datos.rol}
+            onChange={(v) => actualizar('rol', v as 'joven' | 'encargado' | 'nexo')}
+            options={ROLES}
+            required
+          />
 
-        {datos.esRegistroPorEncargado ? (
-          <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <Campo etiqueta="Nombre del encargado" value={datos.encargadoNombre} onChange={(e) => actualizar('encargadoNombre', e.target.value)} />
-            <Campo etiqueta="Contacto del encargado" value={datos.encargadoContacto} onChange={(e) => actualizar('encargadoContacto', e.target.value)} />
-          </div>
-        ) : null}
+          <label className="flex items-center gap-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.875rem', letterSpacing: '0.03em', color: 'var(--color-text)' }}>
+            <input
+              type="checkbox"
+              checked={datos.esRegistroPorEncargado}
+              onChange={(e) => actualizar('esRegistroPorEncargado', e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--color-accent)', border: '2px solid var(--color-ink)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
+            />
+            Registro por encargado
+          </label>
 
-        {error ? <Alerta tipo="error">{error}</Alerta> : null}
+          {datos.esRegistroPorEncargado ? (
+            <Card className="p-3" style={{ background: 'var(--color-paper-light)', border: '2px solid var(--color-ink)' }}>
+              <Input label="Nombre del encargado" value={datos.encargadoNombre} onChange={(v) => actualizar('encargadoNombre', v)} />
+              <Input label="Contacto del encargado" value={datos.encargadoContacto} onChange={(v) => actualizar('encargadoContacto', v)} />
+            </Card>
+          ) : null}
 
-        <Boton anchoCompleto className="min-h-14 text-base" disabled={procesando}>
-          {procesando ? 'Creando…' : 'Crear registro y gafete'}
-        </Boton>
-      </form>
+          {error && <Alert variant="error">{error}</Alert>}
+
+          <Button fullWidth className="min-h-14 text-base" disabled={procesando}>
+            {procesando ? 'Creando…' : 'Crear registro y gafete'}
+          </Button>
+        </form>
+      </Card>
     </div>
   )
 }

@@ -1,0 +1,75 @@
+@layer components {
+  /* 1. Titular sólido */
+  .t-solid {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--fs-hero);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 0.95;
+    color: var(--color-ink);
+  }
+
+  /* 2. Titular contorno (transparente con trazo) */
+  .t-outline {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--fs-hero);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 0.95;
+    color: transparent;
+    -webkit-text-stroke: 2px var(--color-ink);
+    paint-order: stroke fill;
+  }
+
+  /* Fallback si no hay soporte */
+  @supports not (-webkit-text-stroke: 1px #000) {
+    .t-outline {
+      color: var(--color-ink);
+    }
+  }
+
+  /* 3. Titular con desvanecido (efecto en "PRONTO") */
+  .t-fade {
+    background: linear-gradient(90deg, var(--color-ink) 0%, var(--color-ink-fade) 45%, var(--color-ink) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* 4. Fecha en rojo */
+  .t-date {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--fs-date);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    color: var(--color-red);
+  }
+
+  /* 5. Eyebrow fino */
+  .t-eyebrow {
+    font-family: var(--font-fine);
+    font-size: var(--fs-eyebrow);
+    letter-spacing: 0.03em;
+    color: var(--color-ink);
+  }
+
+  /* 6. Script acento ("Diferente") */
+  .t-script {
+    font-family: var(--font-script);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    color: var(--color-ink);
+  }
+
+  /* Stacked headlines */
+  .stack {
+    display: grid;
+    line-height: 0.9;
+  }
+
+  .stack > span {
+    display: block;
+  }
+}

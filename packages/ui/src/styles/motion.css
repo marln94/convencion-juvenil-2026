@@ -1,0 +1,62 @@
+@layer utilities {
+  @keyframes neq-enter {
+    0% {
+      transform: scale(1.2) rotate(10deg);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes stack-stagger {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes brush-fade {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .animate-neq-enter {
+    animation: neq-enter 400ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  .animate-stack-stagger > * {
+    animation: stack-stagger 400ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .animate-stack-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stack-stagger > *:nth-child(2) { animation-delay: 80ms; }
+  .animate-stack-stagger > *:nth-child(3) { animation-delay: 160ms; }
+  .animate-stack-stagger > *:nth-child(4) { animation-delay: 240ms; }
+  .animate-stack-stagger > *:nth-child(5) { animation-delay: 320ms; }
+  .animate-stack-stagger > *:nth-child(6) { animation-delay: 400ms; }
+
+  .animate-brush-fade {
+    animation: brush-fade 800ms ease-out forwards;
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}

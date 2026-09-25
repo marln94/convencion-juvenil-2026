@@ -2,7 +2,7 @@ import { ApiError } from '@convencion/api-client'
 import type { ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Alerta, Boton, Campo, EncabezadoVista, PillCheckIn, PillPago } from '../componentes/ui'
+import { Alert, Button, Card, Input, Pill, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { buscarEnIndice } from '../lib/indice'
 import { cargarParticipantes } from '../lib/participantes'
@@ -21,17 +21,17 @@ function calcularEstadisticas(items: ResumenParticipante[]): Estadisticas {
     pagados: items.filter((item) => item.estadoPago === 'pagado').length,
     pendientes: items.filter((item) => item.estadoPago === 'pendiente').length,
     inSitu: items.filter((item) => item.tipoRegistro === 'in_situ').length,
-    llegados: items.filter((item) => item.checkIn).length
+    llegados: items.filter((item) => item.checkIn).length,
   }
 }
 
-const TARJETAS: { clave: keyof Estadisticas; etiqueta: string; estilo: string }[] = [
-  { clave: 'inscritos', etiqueta: 'Inscritos', estilo: 'text-slate-900' },
-  { clave: 'pagados', etiqueta: 'Pagados', estilo: 'text-emerald-600' },
-  { clave: 'pendientes', etiqueta: 'Pendientes', estilo: 'text-amber-600' },
-  { clave: 'inSitu', etiqueta: 'In situ', estilo: 'text-sky-600' },
-  { clave: 'llegados', etiqueta: 'Llegados', estilo: 'text-indigo-600' }
-]
+const ESTADISTICAS_CONFIG = [
+  { key: 'inscritos' as keyof Estadisticas, label: 'Inscritos', variant: 'default' as const },
+  { key: 'pagados' as keyof Estadisticas, label: 'Pagados', variant: 'green' as const },
+  { key: 'pendientes' as keyof Estadisticas, label: 'Pendientes', variant: 'amber' as const },
+  { key: 'inSitu' as keyof Estadisticas, label: 'In situ', variant: 'default' as const },
+  { key: 'llegados' as keyof Estadisticas, label: 'Llegados', variant: 'default' as const },
+] as const
 
 export function VistaDashboard() {
   const [todos, setTodos] = useState<ResumenParticipante[]>([])
@@ -74,60 +74,67 @@ export function VistaDashboard() {
   const estadisticas = useMemo(() => calcularEstadisticas(todos), [todos])
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <EncabezadoVista
+    <div className="container">
+      <VistaHeader
         titulo="Dashboard"
         descripcion="Resumen de inscripción y llegadas"
-        acciones={<Boton onClick={() => void cargar()}>Actualizar</Boton>}
+        acciones={<Button variant="outline" onClick={() => void cargar()}>Actualizar</Button>}
       />
 
       {error ? (
         <div className="mb-4">
-          <Alerta tipo={navigator.onLine ? 'error' : 'aviso'}>{error}</Alerta>
+          <Alert variant={navigator.onLine ? 'error' : 'warning'}>
+            {error}
+          </Alert>
         </div>
       ) : null}
 
-      {cargando ? <Alerta tipo="info">Cargando datos…</Alerta> : null}
+      {cargando ? <Alert variant="info">Cargando datos…</Alert> : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-        {TARJETAS.map((tarjeta) => (
-          <div
-            key={tarjeta.clave}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <p className={`text-3xl font-bold ${tarjeta.estilo}`}>{estadisticas[tarjeta.clave]}</p>
-            <p className="mt-1 text-sm font-medium text-slate-500">{tarjeta.etiqueta}</p>
-          </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 mb-6">
+        {ESTADISTICAS_CONFIG.map((config) => (
+          <Card key={config.key} className="text-center">
+            <p className="text-3xl font-bold" style={{ color: 'var(--color-text)' }}>
+              {estadisticas[config.key]}
+            </p>
+            <p className="mt-1 text-sm font-medium" style={{ color: 'var(--color-ink-soft)' }}>
+              {config.label}
+            </p>
+          </Card>
         ))}
       </div>
 
-      <div className="mt-6">
-        <Campo
-          etiqueta="Buscar por nombre"
+      <div className="mb-4">
+        <Input
+          label="Buscar por nombre"
           placeholder="Escribí para filtrar…"
           value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
+          onChange={setFiltro}
         />
-        <ul className="mt-3 flex flex-col gap-2">
-          {resultados.map((participante) => (
-            <li
-              key={participante.participantId}
-              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
-            >
-              <span className="block font-semibold text-slate-900">{participante.nombre}</span>
-              <span className="mt-1 flex flex-wrap gap-2">
-                <PillPago estadoPago={participante.estadoPago} />
-                <PillCheckIn checkIn={participante.checkIn} />
-              </span>
-            </li>
-          ))}
-          {filtro.trim() && resultados.length === 0 ? (
-            <li>
-              <Alerta tipo="info">Sin coincidencias</Alerta>
-            </li>
-          ) : null}
-        </ul>
       </div>
+
+      <ul className="flex flex-col gap-2">
+        {resultados.map((participante) => (
+          <Card key={participante.participantId} className="flex items-center justify-between gap-3 p-3">
+            <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+              {participante.nombre}
+            </span>
+            <div className="flex gap-2">
+              <Pill variant={participante.estadoPago === 'pagado' ? 'green' : participante.estadoPago === 'pendiente' ? 'amber' : 'red'}>
+                {participante.estadoPago === 'pagado' ? 'Pagado' : participante.estadoPago === 'pendiente' ? 'Pendiente' : 'Rechazado'}
+              </Pill>
+              <Pill variant={participante.checkIn ? 'green' : 'default'}>
+                {participante.checkIn ? 'Llegó' : 'No llegó'}
+              </Pill>
+            </div>
+          </Card>
+        ))}
+        {filtro.trim() && resultados.length === 0 && (
+          <li>
+            <Alert variant="info">Sin coincidencias</Alert>
+          </li>
+        )}
+      </ul>
     </div>
   )
 }

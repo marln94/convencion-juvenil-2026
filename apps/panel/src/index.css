@@ -1,4 +1,21 @@
 @import "tailwindcss";
+@import "@convencion/ui/styles/base.css";
+@import "@convencion/ui/styles/background.css";
+@import "@convencion/ui/styles/typography.css";
+@import "@convencion/ui/styles/layout.css";
+@import "@convencion/ui/styles/components.css";
+@import "@convencion/ui/styles/motion.css";
+@import "@convencion/ui/styles/a11y.css";
+
+@theme {
+  --color-bg: var(--color-bg);
+  --color-text: var(--color-text);
+  --color-accent: var(--color-accent);
+  --color-border: var(--color-border);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --radius: var(--radius);
+}
 
 @media print {
   body {
