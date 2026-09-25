@@ -34,6 +34,7 @@
     --font-fine: "Poiret One", "Poppins", sans-serif;
     --font-script: "Sacramento", cursive;
     --font-body: "Poppins", system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     /* Fluid Type Scale */
     --fs-hero: clamp(2.75rem, 9vw, 8rem);

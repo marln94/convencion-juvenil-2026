@@ -7,7 +7,7 @@ import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
 import { Alert, Button, Card, DayPicker, Input, Select, StepIndicator, VistaHeader, Hero, MarkNeq, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
-import { canvasAFile, componerGafete, descargarCanvas, slugDeNombre } from './lib/gafete'
+import { canvasAFile, componerGafete, descargarCanvas, leerColoresQr, slugDeNombre, RESOLUCION_QR } from './lib/gafete'
 
 const NOMBRE_CONVENCION = 'Convención Juvenil 2026'
 
@@ -94,6 +94,7 @@ export function App() {
   const [resultado, setResultado] = useState<RegistrarParticipanteOutput | null>(null)
   const [descargado, setDescargado] = useState(false)
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [coloresQr] = useState(leerColoresQr)
 
   const pasoActual = PASOS_CONFIG.find((p) => p.id === paso)
   const pasoIndex = pasoActual ? PASOS_CONFIG.findIndex((p) => p.id === paso) : 0
@@ -220,6 +221,7 @@ export function App() {
     const lienzo = await componerGafete(qrCanvasRef.current, {
       nombre: resultado.participante.nombre,
       participantId: resultado.participante.participantId,
+      convencion: NOMBRE_CONVENCION,
     })
     const nombreArchivo = `gafete-${slugDeNombre(resultado.participante.nombre)}.png`
     const archivo = await canvasAFile(lienzo, nombreArchivo)
@@ -524,9 +526,11 @@ export function App() {
                       <QRCodeCanvas
                         ref={qrCanvasRef}
                         value={resultado.codigoQr}
-                        size={512}
+                        size={RESOLUCION_QR}
                         level="M"
-                        includeMargin
+                        marginSize={4}
+                        fgColor={coloresQr.tinta}
+                        bgColor={coloresQr.fondo}
                         aria-label={`Código QR de ${resultado.participante.nombre}`}
                         style={{ width: '100%', height: '100%' }}
                       />

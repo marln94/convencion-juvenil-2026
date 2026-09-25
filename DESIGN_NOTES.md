@@ -23,6 +23,9 @@ Estado de la implementación del sistema de diseño para la Convención Juvenil 
 - El `registro-footer` (80px) se oculta solo en `bienvenida`, donde repite lo que el header ya muestra. `paso` nunca vuelve a `'bienvenida'`, así que el footer aparece desde el primer paso del wizard en adelante.
 - Brush no se imprime (`display: none` en `@media print`) porque una capa fija se repite en cada página.
 - Brush usa `screen` bajo `.theme-dark`; `multiply` de rojo sobre `#0A0A0A` es negro y la mancha desaparecería. Preventive: `.theme-dark` todavía no se aplica en ninguna app.
+- El gafete PNG (`apps/registro/src/lib/gafete.ts`) se dibuja en canvas a 2× y exporta 1280 px de ancho, unos 10.8 × 14.1 cm a 300 DPI, para que sea imprimible. Es **light-only por construcción**: lee `--color-paper-light`, `--color-ink`, `--color-ink-fade` y `--color-red`, nunca los alias `--color-bg` ni `--color-text`, que son los únicos que se intercambian bajo `.theme-dark`. Un gafete oscuro con el QR invertido sería ilegible en la puerta y sobre el papel.
+- El fondo del gafete es deliberadamente plano, sin la textura de papel: el asset sigue siendo un placeholder y un tile escalado a 1280 es ruido alrededor de un QR.
+- El QR del gafete no lleva logo, marco ni borde propios, y el `--color-red` no se usa en los módulos. Los módulos van `--color-ink` sobre `--color-paper-light` (18.97:1); cualquier color de contraste reducido degrada el escaneo en la puerta y más todavía en impresión.
 
 ## Pendientes conocidos
 
