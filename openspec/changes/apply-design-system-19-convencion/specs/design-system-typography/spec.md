@@ -39,7 +39,7 @@ The system SHALL provide a .t-date utility class for red uppercase dates (e.g., 
 - **THEN** it uses --font-display at --fs-date size, weight 700, uppercase, letter-spacing 0.01em, color var(--color-red)
 
 ### Requirement: Fine eyebrow style (.t-eyebrow)
-The system SHALL provide a .t-eyebrow utility class for fine uppercase labels (e.g., "19 Convención Juvenil Nacional").
+The system SHALL provide a .t-eyebrow utility class for fine labels using the --font-fine family.
 
 #### Scenario: Eyebrow text renders correctly
 - **WHEN** .t-eyebrow is applied to an element
@@ -62,21 +62,3 @@ The system SHALL provide a .stack component for vertically stacking repeated hea
 #### Scenario: Stacked headlines accessibility
 - **WHEN** .stack is used for repeated headlines
 - **THEN** container has aria-label with the text content, and duplicate spans have aria-hidden="true"
-
-## MODIFIED Requirements
-
-### Requirement: Existing formulario-registro text presentation
-**FROM**: Form uses default Tailwind typography (slate colors, rounded sizes)
-**TO**: Form uses design system typography utilities for all headings, labels, and helper text
-
-#### Scenario: Registration wizard uses design typography
-- **WHEN** user views registration steps
-- **THEN** step titles use .t-eyebrow, section headings use .t-solid/.t-outline, dates use .t-date, labels use --font-body
-
-### Requirement: Existing panel text presentation
-**FROM**: Panel uses default Tailwind typography
-**TO**: Panel uses design system typography utilities for all headings, navigation, and content
-
-#### Scenario: Panel vistas use design typography
-- **WHEN** admin views dashboard, pagos, equipos, checkin, registro-insitu
-- **THEN** vista titles use .t-solid/.t-outline, nav uses uppercase --font-display, data uses --font-body

@@ -4,7 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
 
-import { Alert, Button, Card, CheckboxGroup, Input, Select, StepIndicator, VistaHeader, Hero, MarkNeq, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, Input, Select, StepIndicator, VistaHeader, Hero, MarkNeq, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
 import { canvasAFile, componerGafete, descargarCanvas, slugDeNombre } from './lib/gafete'
@@ -14,7 +14,7 @@ const NOMBRE_CONVENCION = 'Convención Juvenil 2026'
 type Paso = 'bienvenida' | 'identidad' | 'ubicacion' | 'asistencia' | 'contacto' | 'comprobante' | 'confirmacion'
 
 const PASOS_CONFIG = [
-  { id: 'identidad', titulo: 'Identidad', campos: ['nombre', 'rol', 'edad'] as const },
+  { id: 'identidad', titulo: 'Datos', campos: ['nombre', 'rol', 'edad'] as const },
   { id: 'ubicacion', titulo: 'Ubicación', campos: ['localidad', 'region'] as const },
   { id: 'asistencia', titulo: 'Días', campos: ['diasAsistencia'] as const },
   { id: 'contacto', titulo: 'Contacto', campos: ['contacto', 'correo'] as const },
@@ -63,10 +63,10 @@ const REGIONES: [string, string][] = [
 ]
 
 const DIAS_ASISTENCIA_OPTIONS = [
-  { value: 'jueves-24', label: 'Jueves 24' },
-  { value: 'viernes-25', label: 'Viernes 25' },
-  { value: 'sabado-26', label: 'Sábado 26' },
-  { value: 'domingo-27', label: 'Domingo 27' },
+  { value: 'jueves-24', label: 'Jueves 24 de diciembre', number: 24, dayName: 'Jueves', dateTime: '2026-12-24' },
+  { value: 'viernes-25', label: 'Viernes 25 de diciembre', number: 25, dayName: 'Viernes', dateTime: '2026-12-25' },
+  { value: 'sabado-26', label: 'Sábado 26 de diciembre', number: 26, dayName: 'Sábado', dateTime: '2026-12-26' },
+  { value: 'domingo-27', label: 'Domingo 27 de diciembre', number: 27, dayName: 'Domingo', dateTime: '2026-12-27' },
 ]
 
 const ROLES: [string, string][] = [
@@ -303,33 +303,33 @@ export function App() {
 
   return (
     <Fragment>
-      <div className="min-h-screen paper-noise" style={{ background: 'var(--color-bg)' }}>
-        <header className="no-print border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+      <div className="registro-shell paper-noise" style={{ background: 'var(--color-bg)' }}>
+        <header className="registro-header no-print shrink-0 bg-[var(--color-bg)]">
           <Container>
-            <div className="py-4">
+            <div className="py-2 md:py-4">
               <p className="t-eyebrow text-sm" style={{ color: 'var(--color-accent)' }}>Inscripción en línea</p>
-              <h1 className="t-solid text-2xl">{NOMBRE_CONVENCION}</h1>
+              <h1 className="t-solid text-xl md:text-2xl">{NOMBRE_CONVENCION}</h1>
             </div>
           </Container>
         </header>
 
-        <main>
+        <main className="registro-main">
           <Container>
             <Fragment>
               {paso === 'bienvenida' && (
-                <Hero className="relative py-12">
+                <Hero className="relative py-6 md:py-12">
                   <div className="text-center">
-                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-8" aria-label="Muy pronto">
+                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-4 md:mb-8" aria-label="Muy pronto">
                       <span className="t-outline">MUY PRONTO</span>
                       <span className="t-solid">MUY PRONTO</span>
                       <span className="t-outline">MUY PRONTO</span>
                       <span className="t-solid">MUY PRONTO</span>
                     </div>
-                    <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter" />
+                    <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter mx-auto h-auto w-40 sm:w-56" />
                     <Brush position="tr" className="animate-brush-fade" />
                     <Brush position="bl" className="animate-brush-fade" />
                   </div>
-                  <div className="mt-8">
+                  <div className="mt-4 md:mt-8">
                     <Button variant="primary" onClick={iniciarWizard} className="w-full sm:w-auto">
                       Comenzar inscripción
                     </Button>
@@ -343,8 +343,8 @@ export function App() {
 
                   {PASOS_CONFIG.map((config) =>
                     config.id === paso && (
-                      <Section key={config.id} className="mb-8">
-                        <div className="mb-6">
+                      <Section key={config.id} className="mb-4 md:mb-8">
+                        <div className="mb-3 md:mb-6">
                           <h2 className="t-solid text-2xl">{config.titulo}</h2>
                           <p className="t-eyebrow mt-1">
                             {config.id === 'identidad' && 'Completá tu nombre, rol y edad.'}
@@ -356,7 +356,7 @@ export function App() {
                         </div>
 
                         {config.id !== 'comprobante' && (
-                          <form onSubmit={siguientePaso} className="space-y-4 no-print">
+                          <form onSubmit={siguientePaso} className="space-y-3 no-print sm:space-y-4">
                             {config.campos.map((campo) => (
                               <Fragment key={campo}>
                                 {campo === 'nombre' && (
@@ -419,13 +419,14 @@ export function App() {
                                   />
                                 )}
                                 {campo === 'diasAsistencia' && (
-                                  <CheckboxGroup
+                                  <DayPicker
+                                    className="registro-day-picker"
                                     label="Días de asistencia"
                                     value={datos.diasAsistencia}
                                     onChange={actualizar('diasAsistencia')}
                                     onBlur={() => tocar('diasAsistencia')}
                                     required
-                                    options={DIAS_ASISTENCIA_OPTIONS}
+                                    days={DIAS_ASISTENCIA_OPTIONS}
                                     error={errorDe('diasAsistencia')}
                                   />
                                 )}
@@ -452,7 +453,7 @@ export function App() {
                                 )}
                               </Fragment>
                             ))}
-                            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                            <div className="mt-4 flex flex-col-reverse gap-3 sm:mt-6 sm:flex-row sm:justify-between">
                               {pasoIndex > 0 && <Button variant="outline" onClick={pasoAnterior}>Volver</Button>}
                               <Button type="submit" variant="primary">
                                 {esUltimoPasoDatos ? 'Continuar al comprobante' : 'Continuar'}
@@ -467,7 +468,8 @@ export function App() {
                             {errorSubida && <div className="mb-4"><Alert variant="error">{errorSubida}</Alert></div>}
                             {adjunto && !errorApi && !errorSubida && (
                               <Alert variant="success" className="mb-4">
-                                Comprobante subido correctamente: {archivo?.name}
+                                Comprobante subido correctamente <br/>
+                                {archivo?.name}
                               </Alert>
                             )}
 
@@ -497,7 +499,7 @@ export function App() {
                               </label>
                             </div>
 
-                            <div className="mt-6 flex flex-col-reverse gap-3 no-print sm:flex-row sm:justify-end">
+                            <div className="mt-4 flex flex-col-reverse gap-3 no-print sm:mt-6 sm:flex-row sm:justify-end">
                               <Button variant="outline" onClick={() => { setPaso('contacto'); resetErrores() }}>Volver</Button>
                               <Button variant="primary" onClick={enviarRegistro} disabled={!adjunto || subiendo || enviando}>
                                 {enviando ? 'Enviando…' : 'Completar inscripción'}
@@ -516,7 +518,7 @@ export function App() {
                   <h2 className="t-solid text-xl">¡Inscripción completada!</h2>
                   <p className="t-eyebrow mt-1">Mostrá este código QR en el ingreso a la convención.</p>
 
-                  <div className="mx-auto mt-6 w-full max-w-[90vw] sm:max-w-[320px] md:max-w-[360px]">
+                  <div className="mx-auto mt-4 w-full max-w-[240px] sm:mt-6 sm:max-w-[320px] md:max-w-[360px]">
                     <Card className="aspect-square flex items-center justify-center">
                       <QRCodeCanvas
                         ref={qrCanvasRef}
@@ -529,17 +531,17 @@ export function App() {
                     </Card>
                   </div>
 
-                  <Card className="mt-5 text-sm">
+                  <Card className="mt-3 text-sm md:mt-5">
                     <p className="t-eyebrow">Tu identificador</p>
                     <p className="font-mono font-semibold" style={{ color: 'var(--color-text)' }}>{resultado.participante.participantId}</p>
                   </Card>
 
-                  <Alert variant="warning" className="mt-4">
+                  <Alert variant="warning" className="mt-3 md:mt-4">
                     Tu comprobante quedó <strong>pendiente de revisión</strong>. Si el pago se
                     rechaza, se te va a contactar por el medio indicado.
                   </Alert>
 
-                  <div className="mt-6 flex flex-col gap-3 no-print sm:flex-row sm:justify-center">
+                  <div className="mt-4 flex flex-col gap-3 no-print sm:mt-6 sm:flex-row sm:justify-center">
                     <Button variant="primary" onClick={compartirResultado}>
                       {descargado ? 'Gafete descargado' : 'Guardar/Compartir'}
                     </Button>
@@ -552,9 +554,9 @@ export function App() {
           </Container>
         </main>
 
-        <footer className="no-print mt-auto">
+        <footer className="registro-footer no-print mt-auto shrink-0">
           <Container>
-            <p className="text-center py-8 text-xs" style={{ color: 'var(--color-ink-soft)' }}>
+            <p className="py-3 text-center text-xs md:py-8" style={{ color: 'var(--color-ink-soft)' }}>
               {NOMBRE_CONVENCION} · Inscripción en línea
             </p>
           </Container>

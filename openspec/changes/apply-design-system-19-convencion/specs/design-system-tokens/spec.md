@@ -26,7 +26,7 @@ The system SHALL expose CSS custom properties for font families and fluid type s
 
 #### Scenario: Fluid type scale tokens available
 - **WHEN** a stylesheet imports the design tokens
-- **THEN** the following custom properties are defined: --fs-hero, --fs-h1, --fs-h2, --fs-h3, --fs-date, --fs-eyebrow, --fs-body, --fs-small with clamp() values matching the guide
+- **THEN** the following custom properties are defined: --fs-hero, --fs-h1, --fs-h2, --fs-h3, --fs-date, --fs-eyebrow, --fs-body, --fs-small; --fs-eyebrow uses clamp(1.25rem, 2vw, 1.5rem), and the remaining display sizes use fluid clamp() values
 
 ### Requirement: Spacing and layout tokens
 The system SHALL expose CSS custom properties for container width, gutter, spacing scale, and border radius.
@@ -41,21 +41,3 @@ The system SHALL load Poppins (400,500,700,800), Poiret One, and Sacramento from
 #### Scenario: Fonts load correctly
 - **WHEN** the app loads in a browser
 - **THEN** the three font families are available for use in CSS without layout shift
-
-## MODIFIED Requirements
-
-### Requirement: Existing panel capability visual layer
-**FROM**: Panel uses default Tailwind indigo/slate theme with rounded components
-**TO**: Panel uses design system tokens for all visual styling
-
-#### Scenario: Panel consumes design tokens
-- **WHEN** panel app styles are applied
-- **THEN** all colors, typography, spacing come from design system tokens
-
-### Requirement: Existing registro capability visual layer
-**FROM**: Registro uses default Tailwind indigo/slate theme with rounded components
-**TO**: Registro uses design system tokens for all visual styling
-
-#### Scenario: Registro consumes design tokens
-- **WHEN** registro app styles are applied
-- **THEN** all colors, typography, spacing come from design system tokens

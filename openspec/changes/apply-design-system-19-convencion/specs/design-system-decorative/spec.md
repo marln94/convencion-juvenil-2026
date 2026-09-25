@@ -7,15 +7,15 @@ Provides the decorative components that define the event's visual identity: the 
 ## ADDED Requirements
 
 ### Requirement: ≠ symbol component (MarkNeq)
-The system SHALL provide a MarkNeq component rendering the red brush ≠ symbol as an SVG/PNG image.
+The system SHALL provide a MarkNeq component rendering the red brush ≠ symbol as an inline SVG with a square aspect ratio and caller-controlled dimensions.
 
-#### Scenario: MarkNeq renders at default size
-- **WHEN** <MarkNeq /> is rendered
-- **THEN** it displays as inline-block with clamp(48px, 8vw, 96px) size, aspect-ratio 1, background SVG centered/contain
+#### Scenario: MarkNeq honors rendered dimensions
+- **WHEN** <MarkNeq /> is rendered with default, class, or style sizing
+- **THEN** it preserves its 1:1 viewBox and renders at the dimensions provided by the caller without adding implicit full-width flow
 
-#### Scenario: Hero ≠ overlay (hero__neq)
-- **WHEN** .hero__neq class is applied
-- **THEN** it positions absolute at center (inset: 50% auto auto 50%, transform: translate(-50%, -50%)), width clamp(200px, 40%, 520px), mix-blend-mode: multiply, pointer-events: none
+#### Scenario: Registration hero uses a compact decorative ≠
+- **WHEN** the registration welcome screen renders a decorative MarkNeq
+- **THEN** the symbol is centered, constrained to a compact responsive size, and hidden from assistive technology
 
 #### Scenario: Favicon ≠ symbol
 - **WHEN** favicon is requested
@@ -60,21 +60,3 @@ The system SHALL provide a MapPin component for the location map pin (white circ
 #### Scenario: Map pin integrates with map
 - **WHEN** map pin is placed on map
 - **THEN** it connects via dotted connector to info block, map paths use var(--color-ink) fill with var(--color-white) stroke
-
-## MODIFIED Requirements
-
-### Requirement: Existing panel decorative elements
-**FROM**: Panel has no decorative event branding
-**TO**: Panel uses ≠ symbol, brushes, organic lines on key screens
-
-#### Scenario: Panel login shows ≠ watermark
-- **WHEN** user visits panel login
-- **THEN** ≠ symbol appears as subtle watermark/decoration
-
-### Requirement: Existing registro decorative elements
-**FROM**: Registro has no decorative event branding
-**TO**: Registro uses ≠ symbol, brushes on hero and confirmation screens
-
-#### Scenario: Registro hero shows stacked headlines with ≠ overlay
-- **WHEN** user visits registration welcome screen
-- **THEN** hero displays stacked "MUY PRONTO" with .hero__neq overlay, brushes in corners

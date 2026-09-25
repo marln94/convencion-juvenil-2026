@@ -7,25 +7,33 @@ Provides layout primitives (Container, Section, Hero, InfoBlock, Split) and resp
 ## ADDED Requirements
 
 ### Requirement: Container utility (.container)
-The system SHALL provide a .container utility for max-width centered content with responsive gutters.
+The system SHALL provide a .container utility for max-width centered content with responsive gutters in every application.
 
 #### Scenario: Container constrains content width
 - **WHEN** .container is applied
 - **THEN** width is min(100% - var(--gutter)*2, var(--container)) with margin-inline: auto, where --container=1200px, --gutter=clamp(1rem, 4vw, 3rem)
 
+#### Scenario: Applications preserve responsive gutters
+- **WHEN** panel or registration content is rendered inside .container
+- **THEN** content keeps at least one --gutter of space on each side and remains centered
+
 ### Requirement: Section utility (.section)
-The system SHALL provide a .section utility for consistent vertical padding and positioning context.
+The system SHALL provide a .section utility for consistent vertical padding and positioning context, with compact spacing on mobile viewports.
 
 #### Scenario: Section provides consistent spacing
 - **WHEN** .section is applied
-- **THEN** it has padding-block: var(--space-6) (7rem), position: relative, overflow: hidden
+- **THEN** it has padding-block: var(--space-6) (7rem) at 768px and above, padding-block: var(--space-3) below 768px, position: relative, overflow: hidden
 
 ### Requirement: Hero component (Hero)
-The system SHALL provide a Hero component for full-viewport hero sections respecting 16:9 proportion on desktop.
+The system SHALL provide a Hero component that fills the viewport on larger screens and sizes to its content on mobile while respecting the 16:9 proportion on desktop.
 
-#### Scenario: Hero fills viewport height
-- **WHEN** <Hero /> renders
+#### Scenario: Hero fills viewport height on larger screens
+- **WHEN** <Hero /> renders at 768px or wider
 - **THEN** it has min-height: 100svh, display: grid, place-items: center, position: relative, overflow: hidden
+
+#### Scenario: Hero sizes to content on mobile
+- **WHEN** <Hero /> renders below 768px
+- **THEN** it uses min-height: auto so the surrounding application shell controls viewport height
 
 #### Scenario: Hero maintains 16:9 on desktop
 - **WHEN** viewport width >= 1024px
@@ -57,31 +65,31 @@ The system SHALL provide a .split utility for two-column layouts (map left, info
 - **WHEN** .split renders on mobile (<768px)
 - **THEN** it stacks to single column
 
+### Requirement: Responsive application navigation
+The system SHALL keep primary application navigation visible at all viewport sizes, adapting its placement and orientation to the available space.
+
+#### Scenario: Desktop sidebar navigation
+- **WHEN** an authenticated panel user views the application at 768px or wider
+- **THEN** navigation is displayed as a vertical sidebar that remains visible beside the content
+
+#### Scenario: Mobile bottom navigation
+- **WHEN** an authenticated panel user views the application below 768px
+- **THEN** navigation is displayed as a horizontal bar fixed to the bottom, remains above content, and respects the device bottom safe area
+
+### Requirement: Fixed viewport content shell
+The system SHALL allow mobile application content to scroll independently from the surrounding page chrome when content exceeds the viewport.
+
+#### Scenario: Registration content scrolls inside the shell
+- **WHEN** the registration wizard is used below 768px
+- **THEN** the document itself does not scroll, the header and footer remain fixed, and only the main content area scrolls when needed
+
+#### Scenario: Mobile shell respects device insets and printing
+- **WHEN** the viewport includes a safe area or the page is printed
+- **THEN** the shell applies top and bottom safe-area spacing, and printing restores normal document flow without clipping content
+
 ### Requirement: Breakpoints
 The system SHALL define responsive breakpoints at 480px, 768px, 1024px, 1280px.
 
 #### Scenario: Breakpoints available in CSS
 - **WHEN** media queries use design system breakpoints
 - **THEN** they match 480/768/1024/1280px
-
-## MODIFIED Requirements
-
-### Requirement: Existing panel page layout
-**FROM**: Panel uses default Tailwind spacing and container patterns
-**TO**: Panel uses design system layout primitives
-
-#### Scenario: Panel vistas use design layout
-- **WHEN** panel renders dashboard, pagos, equipos, checkin, registro-insitu
-- **THEN** content wrapped in .container, sections use .section, consistent spacing
-
-### Requirement: Existing registro page layout
-**FROM**: Registro uses max-w-2xl centered container with default spacing
-**TO**: Registro uses design system layout primitives with hero, info-block, split patterns
-
-#### Scenario: Registro wizard uses design layout
-- **WHEN** user views registration steps
-- **THEN** welcome screen uses <Hero>, steps use .container/.section, confirmation uses centered card
-
-#### Scenario: Registro hero follows 16:9 proportion
-- **WHEN** user visits welcome screen on desktop
-- **THEN** hero area respects 16:9 aspect ratio with stacked headlines and ≠ overlay

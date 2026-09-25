@@ -6,6 +6,7 @@
 @import "@convencion/ui/styles/components.css";
 @import "@convencion/ui/styles/motion.css";
 @import "@convencion/ui/styles/a11y.css";
+@source "../../../packages/ui/src";
 
 @theme {
   --color-bg: var(--color-bg);
@@ -17,7 +18,76 @@
   --radius: var(--radius);
 }
 
+.registro-shell {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.registro-shell .container {
+  width: min(100% - var(--gutter) * 2, var(--container));
+  max-width: var(--container);
+  margin-inline: auto;
+}
+
+.registro-header {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.registro-main {
+  min-height: 0;
+}
+
+.registro-footer {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .registro-shell {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .registro-main {
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 480px) {
+  .registro-day-picker .day-picker__grid {
+    gap: 0.5rem;
+  }
+
+  .registro-day-picker .day-picker__day {
+    min-height: 5rem;
+  }
+}
+
 @media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+  }
+
+  .registro-shell,
+  .registro-main {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
   body {
     background: white;
   }

@@ -54,11 +54,26 @@ The system SHALL meet WCAG contrast ratios for all text and UI elements.
 - **THEN** white on red (#D90D0D) achieves ~5:1; white on black achieves ~19:1
 
 ### Requirement: Focus indicators
-The system SHALL provide visible focus indicators for all interactive elements.
+The system SHALL provide a visible focus state for interactive elements, using outlines for design-system buttons and day cards, a high-contrast border transition for form controls, and the browser default indicator for navigation buttons.
 
-#### Scenario: Focus visible on all interactives
-- **WHEN** any button, link, input, select receives keyboard focus
-- **THEN** it shows 3px solid var(--color-red) outline with 3px offset
+#### Scenario: Outline focus on design buttons and day cards
+- **WHEN** a design-system Button or selectable day card receives keyboard focus
+- **THEN** it shows a 3px solid var(--color-red) outline with 3px offset
+
+#### Scenario: Border focus on inputs and selects
+- **WHEN** an input or select receives keyboard focus
+- **THEN** its existing 2px border changes to var(--color-red-deep) without changing layout dimensions
+
+#### Scenario: Navigation button focus remains visible
+- **WHEN** a navigation button receives keyboard focus
+- **THEN** the browser's visible default focus indicator is preserved
+
+### Requirement: Content remains reachable in fixed viewport shells
+The system SHALL keep all interactive controls, errors, and confirmation actions reachable when a mobile application disables document-level scrolling.
+
+#### Scenario: Internal content area is keyboard and touch accessible
+- **WHEN** a mobile application uses a fixed shell with an internally scrollable main region
+- **THEN** users can reach every control and error by scrolling that region, and the viewport resizes when the software keyboard opens
 
 ### Requirement: Form labels and errors
 The system SHALL associate labels with inputs and announce errors.
@@ -66,21 +81,3 @@ The system SHALL associate labels with inputs and announce errors.
 #### Scenario: Inputs have associated labels
 - **WHEN** form fields render
 - **THEN** each input has <label> with for/id association, required fields marked, errors announced via aria-invalid and live region
-
-## MODIFIED Requirements
-
-### Requirement: Existing panel accessibility
-**FROM**: Panel has basic accessibility (labels, focus rings)
-**TO**: Panel meets design system accessibility standards
-
-#### Scenario: Panel forms use design a11y patterns
-- **WHEN** user interacts with panel forms
-- **THEN** they have proper labels, error announcements, focus management
-
-### Requirement: Existing registro accessibility
-**FROM**: Registro has basic accessibility (labels, focus rings, aria on step indicator)
-**TO**: Registro meets design system accessibility standards
-
-#### Scenario: Registro wizard uses design a11y patterns
-- **WHEN** user completes registration
-- **THEN** all steps have proper labels, step indicator has aria, confirmation uses semantic time, QR has alt text

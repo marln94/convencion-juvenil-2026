@@ -28,7 +28,7 @@ export function CheckboxGroup({ label, required, options, value, onChange, error
         {label}
         {required && <span className="text-red" aria-hidden="true"> *</span>}
       </legend>
-      <div className="checkbox-group__items" style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="checkbox-group__items" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between" }}>
         {options.map((option) => (
           <label key={option.value} className="checkbox-group__item">
             <input

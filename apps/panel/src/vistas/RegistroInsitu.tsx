@@ -2,7 +2,7 @@ import type { Participante, RegistrarParticipanteOutput } from '@convencion/shar
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 
-import { Alert, Button, Card, CheckboxGroup, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { agregarAlIndice } from '../lib/indice'
@@ -28,10 +28,10 @@ const REGIONES: [string, string][] = [
 ]
 
 const DIAS_ASISTENCIA_OPTIONS = [
-  { value: 'jueves-24', label: 'Jueves 24 dic' },
-  { value: 'viernes-25', label: 'Viernes 25 dic' },
-  { value: 'sabado-26', label: 'Sábado 26 dic' },
-  { value: 'domingo-27', label: 'Domingo 27 dic' },
+  { value: 'jueves-24', label: 'Jueves 24 de diciembre', number: 24, dayName: 'Jueves', dateTime: '2026-12-24' },
+  { value: 'viernes-25', label: 'Viernes 25 de diciembre', number: 25, dayName: 'Viernes', dateTime: '2026-12-25' },
+  { value: 'sabado-26', label: 'Sábado 26 de diciembre', number: 26, dayName: 'Sábado', dateTime: '2026-12-26' },
+  { value: 'domingo-27', label: 'Domingo 27 de diciembre', number: 27, dayName: 'Domingo', dateTime: '2026-12-27' },
 ]
 
 const ROLES: [string, string][] = [
@@ -180,7 +180,7 @@ export function VistaRegistroInsitu() {
   if (resultado) {
     return (
       <div className="container max-w-md">
-        <VistaHeader titulo="Registro in situ" descripcion="Participante creado" />
+        <VistaHeader titulo="Registro" descripcion="Participante creado" />
         <Card className="flex flex-col items-center gap-4 print-area text-center">
           <div>
             <p className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>{resultado.participante.nombre}</p>
@@ -207,7 +207,7 @@ export function VistaRegistroInsitu() {
   return (
     <div className="container max-w-md">
       <VistaHeader
-        titulo="Registro in situ"
+        titulo="Registro"
         descripcion="Crea el participante al momento y genera su gafete"
       />
       <Card>
@@ -230,9 +230,9 @@ export function VistaRegistroInsitu() {
             required
           />
           <Input label="Edad" value={datos.edad} onChange={(v) => actualizar('edad', v)} type="number" min="1" required />
-          <CheckboxGroup
+          <DayPicker
             label="Días de asistencia"
-            options={DIAS_ASISTENCIA_OPTIONS}
+            days={DIAS_ASISTENCIA_OPTIONS}
             value={datos.diasAsistencia}
             onChange={(val) => actualizar('diasAsistencia', val)}
             required

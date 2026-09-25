@@ -127,15 +127,35 @@ export function Button({ variant = 'primary', children, ...props }) {
 
 ### 9. Form Components: Uncontrolled with Validation Hook
 
-**Decision**: Keep `apps/registro`'s current uncontrolled form pattern with `useState` + validation functions. Wrap with design system `Input`, `Select`, `CheckboxGroup` components.
+**Decision**: Keep `apps/registro`'s current form pattern with `useState` + validation functions. Wrap standard fields with design system `Input` and `Select`, and render attendance days with a dedicated `DayPicker` that preserves the existing `diasAsistencia` string array.
 
-**Rationale**: Existing validation logic is solid. Design system components only replace rendering, not state management.
+**Rationale**: Existing validation logic is solid. Design system components only replace rendering, not state management. `DayPicker` specializes the attendance-day interaction without changing the API contract or stable day codes.
 
 ### 10. PWA Manifest: Update Colors Only
 
 **Decision**: Update `vite.config.ts` PWA manifest `theme_color: "#0A0A0A"` (ink), `background_color: "#EDEDED"` (paper). Favicon → ≠ symbol.
 
 **Rationale**: Minimal change, aligns with design tokens. No new PWA features for registro.
+
+### 11. Responsive Application Shells
+
+**Decision**: Keep page chrome outside the mobile scrolling region. The panel uses a sticky vertical sidebar at 768px and wider and a fixed horizontal bottom bar below 768px, including bottom safe-area compensation. The registration app uses a 100dvh shell below 768px: the document does not scroll, the header and footer stay fixed, and only the main content area scrolls when needed. Printing restores normal document flow.
+
+**Rationale**: Persistent navigation and headers remain reachable without bouncing the whole document, while long steps and forms stay fully accessible through an internal scroller.
+
+**Alternative considered**: Apply `overflow: hidden` without an internal scroller. Rejected because it would clip errors, confirmation actions, and long forms.
+
+### 12. Shared Package Scanning and Container Gutter
+
+**Decision**: Both apps register `packages/ui/src` as a Tailwind v4 source so utilities used by shared components are generated. The design-system `.container` remains the source of truth for the `--gutter` and `--container` tokens. The registration shell uses a scoped container rule with the same token formula to outrank Tailwind's same-named container utility without changing the design-system contract.
+
+**Rationale**: Tailwind v4 ignores dependency directories during automatic source detection, and its `.container` utility otherwise removes the design-system side gutters.
+
+### 13. Component-Specific Focus and Status Styling
+
+**Decision**: Design-system Buttons and selectable day cards use a 3px red focus outline. Inputs and selects keep their 2px geometry and signal focus by changing the border to `--color-red-deep`; navigation buttons preserve the browser's default focus indicator. Alerts use a full variant-colored 2px border, and the step indicator uses a 5px track so progress remains visible on small screens.
+
+**Rationale**: Focus remains visually distinct while form controls avoid layout shifts, and status colors remain legible at mobile sizes.
 
 ## Risks / Trade-offs
 
@@ -150,6 +170,9 @@ export function Button({ variant = 'primary', children, ...props }) {
 | Bundle size increase | Tree-shaking via ES modules; CSS is single file ~15KB gzipped; icons inline SVG |
 | Browser support for `mix-blend-mode` | Supported in all modern browsers; fallback: opaque ≠ without blend for old browsers |
 | `text-stroke` fallback | `@supports not (-webkit-text-stroke: 1px #000)` fallback to solid color in `typography.css` |
+| Tailwind v4 ignores shared package classes | Register `packages/ui/src` with `@source` in both app entry stylesheets |
+| Tailwind `.container` overrides the design-system gutter | Keep token formulas identical and use a scoped container rule in the registration shell |
+| Mobile fixed shell hides long content | Keep `main` as the only scroll container, constrain overscroll, and reset the shell for printing |
 
 ## Migration Plan
 

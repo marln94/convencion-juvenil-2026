@@ -4,9 +4,10 @@ export { Select, type SelectProps } from "./Select";
 export { Card, CardTag, type CardProps, type CardTagProps } from "./Card";
 export { Alert, type AlertProps, type AlertVariant } from "./Alert";
 export { Pill, type PillProps, type PillVariant } from "./Pill";
-export { Nav, type NavProps, type NavItem } from "./Nav";
+export { Nav, type NavProps, type NavItem, type NavOrientation } from "./Nav";
 export { StepIndicator, type StepIndicatorProps } from "./StepIndicator";
 export { CheckboxGroup, type CheckboxGroupProps, type CheckboxOption } from "./CheckboxGroup";
+export { DayPicker, type DayPickerProps, type DayOption } from "./DayPicker";
 export { VistaHeader, type VistaHeaderProps } from "./VistaHeader";
 
 // Re-export layout components

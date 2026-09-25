@@ -27,7 +27,7 @@ const VISTAS_STAFF: readonly VistaId[] = ['checkin', 'registro-insitu']
 
 const NAV_ITEMS = [
   { id: 'checkin', label: 'Check-in', adminOnly: false },
-  { id: 'registro-insitu', label: 'In situ', adminOnly: false },
+  { id: 'registro-insitu', label: 'Registro', adminOnly: false },
   { id: 'dashboard', label: 'Dashboard', adminOnly: true },
   { id: 'pagos', label: 'Pagos', adminOnly: true },
   { id: 'equipos', label: 'Equipos', adminOnly: true },
@@ -151,7 +151,7 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
 
   return (
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--color-bg)' }}>
-      <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+      <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-5">
         <div className="container flex h-14 items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <MarkNeq size="default" aria-hidden={true} className="text-[var(--color-accent)]" style={{ width: '28px', height: '28px' }} />
@@ -167,13 +167,22 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
         </div>
       </header>
 
-      <main className="flex-1">
-        <div className="container py-6">{contenido[vista]}</div>
-      </main>
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside className="no-print hidden w-64 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] md:block md:sticky md:top-14 md:h-[calc(100dvh-3.5rem)] md:self-start md:overflow-y-auto">
+          <Nav orientation="vertical" items={navItems} onNavigate={navegar} className="w-full" />
+        </aside>
 
-      <nav className="no-print md:static" aria-label="Navegación principal">
-        <Nav items={navItems} onNavigate={navegar} />
-      </nav>
+        <main className="panel-main min-w-0 flex-1 px-5">
+          <div className="container py-6">{contenido[vista]}</div>
+        </main>
+      </div>
+
+      <Nav
+        orientation="horizontal"
+        items={navItems}
+        onNavigate={navegar}
+        className="panel-mobile-nav no-print fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border)] bg-[var(--color-bg)] md:hidden"
+      />
     </div>
   )
 }

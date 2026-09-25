@@ -6,6 +6,7 @@
 @import "@convencion/ui/styles/components.css";
 @import "@convencion/ui/styles/motion.css";
 @import "@convencion/ui/styles/a11y.css";
+@source "../../../packages/ui/src";
 
 @theme {
   --color-bg: var(--color-bg);
@@ -15,6 +16,20 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --radius: var(--radius);
+}
+
+.panel-main {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.panel-mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (min-width: 768px) {
+  .panel-main {
+    padding-bottom: 0;
+  }
 }
 
 @media print {

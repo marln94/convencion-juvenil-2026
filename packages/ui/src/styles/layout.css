@@ -33,6 +33,16 @@
     font-size: var(--fs-h1);
   }
 
+  @media (max-width: 767px) {
+    .section {
+      padding-block: var(--space-3);
+    }
+
+    .hero {
+      min-height: auto;
+    }
+  }
+
   @media (max-width: 768px) {
     .split {
       grid-template-columns: 1fr;

@@ -25,7 +25,7 @@ export function StepIndicator({ current, total, labels, children }: StepIndicato
               key={step}
               className={`step-indicator__step ${isActive ? "step-indicator__step--active" : ""} ${isCompleted ? "step-indicator__step--completed" : ""}`}
             >
-              <span className="step-indicator__circle" aria-hidden="true">
+              <span className="step-indicator__circle">
                 {step}
               </span>
               {labels?.[i] && <span className="step-indicator__label">{labels[i]}</span>}

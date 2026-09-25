@@ -10,11 +10,12 @@ The 19 Convención Juvenil UPNFM has a defined visual identity ("Diferente" — 
 - **Typography system**: Fluid type scale, reusable text styles (.t-solid, .t-outline, .t-fade, .t-date, .t-eyebrow, .t-script, .stack)
 - **Background & texture**: Paper gray (#EDEDED) with radial glow, tileable noise texture, SVG fallback
 - **Decorative system**: ≠ symbol component (SVG), watercolor brushes, organic lines, dotted connector, map pin
-- **UI components**: Complete redesign of Button, Input, Select, Card, Alert, Pill, Nav, StepIndicator — sharp corners (--radius: 0), uppercase, black/red palette
-- **Layout primitives**: Container, Section, Hero (16:9, 100svh), InfoBlock (right-aligned desktop), Split (map + info)
+- **UI components**: Complete redesign of Button, Input, Select, Card, Alert, Pill, Nav, StepIndicator, and a new calendar-style DayPicker — sharp corners (--radius: 0), uppercase, black/red palette
+- **Layout primitives**: Container, Section, Hero (16:9 on larger screens, content-sized on mobile), InfoBlock (right-aligned desktop), Split (map + info)
+- **Responsive shells**: Persistent desktop sidebar, mobile bottom navigation, safe-area support, and an independently scrollable registration content area
 - **Motion**: Entrance animations for ≠, staggered headlines, brush fade-in; respects prefers-reduced-motion
-- **Accessibility**: ARIA for stacked headlines, decorative images, semantic time elements, map fallback text
-- **Apps updated**: Both `apps/panel` (login, header, nav, all vistas) and `apps/registro` (wizard steps, confirmation) refactored to use new system
+- **Accessibility**: ARIA for stacked headlines, decorative images, semantic time elements, map fallback text, component-specific focus indicators
+- **Apps updated**: Both `apps/panel` (login, header, navigation, all vistas) and `apps/registro` (wizard steps, day selection, confirmation) refactored to use the new system
 - **PWA meta**: Favicon (≠ on white circle), manifest theme/background colors
 
 **BREAKING**: Visual appearance of all screens changes completely. No API or data model changes.
@@ -32,27 +33,21 @@ The 19 Convención Juvenil UPNFM has a defined visual identity ("Diferente" — 
 - `design-system/a11y`: Accessibility patterns for the design system
 
 ### Modified Capabilities
-- `panel`: Visual layer updated to use design system; no requirement changes
-- `registro`: Visual layer updated to use design system; no requirement changes
-- `formulario-registro`: Visual layer updated to use design system; no requirement changes
+- `panel`: Persistent desktop sidebar, mobile bottom navigation, safe-area support, and mobile-first layout behavior
+- `formulario-registro`: Fixed mobile shell with document-level scroll disabled, responsive gutters, keyboard handling, and print-safe flow
+- `campos-extendidos`: Attendance days are captured with a calendar-style multi-select while preserving the existing day codes and validation
+
+### Affected Without Requirement Changes
+- `registro`: Visual layer updated to use the design system; API and data behavior are unchanged
 
 ## Impact
 
 **Affected code:**
-- `apps/panel/src/styles/` (new directory with token, base, typography, layout, components, motion, a11y CSS)
-- `apps/panel/src/components/ui/` (redesigned: Button, Input, Select, Card, Alert, Pill, Nav, StepIndicator)
-- `apps/panel/src/components/decorative/` (new: MarkNeq, Brush, OrganicLines, DottedConnector, MapPin)
-- `apps/panel/src/components/layout/` (new: Container, Section, Hero, InfoBlock)
-- `apps/panel/src/vistas/*.tsx` (refactored to use new components and layout)
-- `apps/panel/src/index.css` (replaced with design system imports)
-- `apps/panel/vite.config.ts` (PWA manifest colors, favicon)
-- `apps/panel/public/favicon.svg` (replaced with ≠ symbol)
-
-- `apps/registro/src/styles/` (mirror of panel styles, or shared via package)
-- `apps/registro/src/components/` (mirror of panel components)
-- `apps/registro/src/App.tsx` (refactored wizard to use design system)
-- `apps/registro/src/index.css` (replaced with design system imports)
-- `apps/registro/vite.config.ts` (PWA manifest colors if PWA added)
+- `packages/ui/src/styles/` (tokens, typography, layout, components, motion, a11y, backgrounds, and shared responsive behavior)
+- `packages/ui/src/components/ui/` (redesigned primitives plus `DayPicker` and orientation-aware `Nav`)
+- `packages/ui/src/components/decorative/` and `packages/ui/src/components/layout/` (shared event visuals and layout primitives)
+- `apps/panel/src/App.tsx`, `apps/panel/src/index.css`, and `apps/panel/src/vistas/RegistroInsitu.tsx` (responsive navigation shell and calendar day selection)
+- `apps/registro/index.html`, `apps/registro/src/App.tsx`, and `apps/registro/src/index.css` (mobile shell, virtual-keyboard viewport, compact layout, and day selection)
 
 **Dependencies:**
 - Google Fonts: Poppins (400,500,700,800), Poiret One, Sacramento
