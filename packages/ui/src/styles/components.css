@@ -476,6 +476,16 @@
     max-width: 80%;
   }
 
+  /* Eslogan "Atrévete a ser diferente" con el ≠ integrado, en un solo WebP con alfa.
+     Sin mix-blend-mode a propósito: el asset tiene canal alfa real, así que compone
+     directo sobre el paper, el brillo radial y el paper-noise. El ancho y alto
+     intrínsecos los declara el <img> para reservar el espacio antes de cargar. */
+  .slogan-lockup {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
   .brush {
     position: fixed;
     inset: 0;

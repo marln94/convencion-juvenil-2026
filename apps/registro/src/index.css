@@ -39,6 +39,25 @@
   min-height: 0;
 }
 
+/* La pantalla de bienvenida es una sola acción, así que su contenido se centra en
+   ambos ejes dentro del espacio que deja el header, en vez de quedar pegado al
+   techo con el resto del viewport vacío debajo.
+
+   El centrado usa `margin-block: auto` en el hijo y no `justify-content: center`
+   en el padre a propósito: con `justify-content`, un hijo más alto que su padre
+   overflowea por arriba y la parte superior se vuelve inalcanzable al desplazar.
+   Los márgenes auto se resuelven a 0 cuando no hay espacio, así que en viewports
+   muy bajos el contenido se ancla arriba y sigue siendo desplazable. */
+.registro-main--centrado {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.registro-main--centrado > .container {
+  margin-block: auto;
+}
+
 .registro-footer {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }

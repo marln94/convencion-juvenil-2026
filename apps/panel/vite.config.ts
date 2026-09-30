@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg'],
         manifest: {
           name: 'Convención · Panel',
           short_name: 'Panel',
@@ -24,15 +23,33 @@ export default defineConfig(({ mode }) => {
           orientation: 'any',
           icons: [
             {
-              src: 'favicon.svg',
-              sizes: 'any',
-              type: 'image/svg+xml',
+              src: 'favicon-48x48.png',
+              sizes: '48x48',
+              type: 'image/png',
               purpose: 'any'
+            },
+            {
+              src: 'android-chrome-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'android-chrome-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
           runtimeCaching: [
             {
               urlPattern: /\/inscripciones(\?.*)?$/,

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Alert, Button, Card, Input, Nav, Pill } from '@convencion/ui/components/ui'
-import { MarkNeq } from '@convencion/ui/components/decorative'
+import { MarkNeq, SloganLockup } from '@convencion/ui/components/decorative'
 import { cerrarSesion, iniciarSesion, obtenerSesion, type SesionPanel } from './lib/auth'
 import { useEstadoRed } from './lib/sincronizacion'
 import { VistaCheckin } from './vistas/Checkin'
@@ -65,9 +65,10 @@ function Login({ alIngresar }: { alIngresar: () => void }) {
     <div className="flex min-h-dvh items-center justify-center bg-bg p-4 text-text">
       <Card className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <MarkNeq aria-hidden={true} className="mx-auto mb-4 w-20" />
-          <h1 className="t-solid text-3xl">Panel</h1>
-          <p className="t-eyebrow mt-2">Convención Juvenil 2026</p>
+          <h1 className="mb-4">
+            <SloganLockup className="mx-auto w-full max-w-xs" />
+          </h1>
+          <p className="t-eyebrow">Convención Juvenil 2026</p>
         </div>
         <form
           className="flex flex-col gap-4"

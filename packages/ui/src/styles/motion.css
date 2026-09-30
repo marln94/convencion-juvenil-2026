@@ -42,6 +42,13 @@
   .animate-stack-stagger > *:nth-child(1) { animation-delay: 0ms; }
   .animate-stack-stagger > *:nth-child(2) { animation-delay: 80ms; }
 
+  /* El lockup del eslogan es una sola imagen, así que no hay spans que escalonar.
+     Reusa la misma curva de stack-stagger sobre el elemento completo. */
+  .animate-slogan-enter {
+    animation: stack-stagger 400ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
   .animate-brush-fade {
     animation: brush-fade 800ms ease-out forwards;
     opacity: 0;

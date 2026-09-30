@@ -20,6 +20,7 @@ const requiredSelectors = [
   ".t-script",
   ".mark-neq",
   ".hero__neq",
+  ".slogan-lockup",
   ".brush",
   ".brush--tr",
   ".brush--bl",

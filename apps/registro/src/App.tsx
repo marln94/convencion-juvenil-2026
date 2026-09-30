@@ -4,7 +4,8 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
 
-import { Alert, Button, Card, DayPicker, Input, Select, StepIndicator, VistaHeader, Hero, MarkNeq, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, Input, Select, StepIndicator, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
+import { SloganLockup } from '@convencion/ui/components/decorative'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
 import { canvasAFile, componerGafete, descargarCanvas, leerColoresQr, slugDeNombre, RESOLUCION_QR } from './lib/gafete'
@@ -315,17 +316,13 @@ export function App() {
           </Container>
         </header>
 
-        <main className="registro-main">
+        <main className={paso === 'bienvenida' ? 'registro-main registro-main--centrado' : 'registro-main'}>
           <Container>
             <Fragment>
               {paso === 'bienvenida' && (
                 <Hero className="relative py-6 md:py-12">
                   <div className="text-center">
-                    <div className="stack animate-stack-stagger mx-auto max-w-3xl mb-4 md:mb-8" role="img" aria-label="Muy pronto">
-                      <span className="t-outline" aria-hidden="true">MUY</span>
-                      <span className="t-solid" aria-hidden="true">PRONTO</span>
-                    </div>
-                    <MarkNeq size="hero" aria-hidden={true} className="animate-neq-enter mx-auto h-auto w-40 sm:w-56" />
+                    <SloganLockup className="animate-slogan-enter mx-auto w-full max-w-xl" />
                     <Brush position="tr" className="animate-brush-fade" />
                     <Brush position="bl" className="animate-brush-fade" />
                   </div>
