@@ -100,12 +100,17 @@
 
 ## 12. Asset Integration (Blocked on Designer Delivery)
 
-- [ ] 12.1 Blocked: replace the placeholder texture with the designer 512×512 tileable PNG
-- [ ] 12.2 Blocked: replace MarkNeq fallback art with the designer `neq-red.svg`
-- [ ] 12.3 Optional: swap the brush ink wash for designer watercolor PNG/WebP assets. No longer blocked — the CSS wash is the shipped form, see design.md 3.1
-- [ ] 12.4 Blocked: replace organic-line fallbacks with designer SVG assets
-- [ ] 12.5 Blocked: define and integrate the designer Honduras map SVG and MapPin usage
-- [ ] 12.6 Blocked: self-host licensed OTF/WOFF2 fonts and remove the Google Fonts dependency if licensing becomes available
+These six tasks stay unchecked on purpose. They are deferred, not abandoned: each one
+blocks on an asset that the designer has not delivered. This change is archived anyway so
+that `design-system-decorative` exists as a spec baseline and later changes can modify it.
+Expect each of these to be picked up in its own change once the asset lands.
+
+- [ ] 12.1 Blocked: replace the placeholder texture with the designer 512×512 tileable PNG — Deferred. No tileable texture delivered. Ships the CSS-generated paper grain. Pick up in a follow-up change when the PNG arrives
+- [ ] 12.2 Blocked: replace MarkNeq fallback art with the designer `neq-red.svg` — Deferred. Only the provisional `neq` art exists. Ships the current SVG. Note that the welcome and login screens no longer use MarkNeq at all; it is now header-only, which narrows the blast radius of this deferral
+- [ ] 12.3 Optional: swap the brush ink wash for designer watercolor PNG/WebP assets. No longer blocked — the CSS wash is the shipped form, see design.md 3.1 — Closed as done-by-decision. The CSS wash is the intended final form, not a fallback
+- [ ] 12.4 Blocked: replace organic-line fallbacks with designer SVG assets — Deferred. No SVGs delivered. Ships the CSS fallbacks
+- [ ] 12.5 Blocked: define and integrate the designer Honduras map SVG and MapPin usage — Deferred. No map delivered. Not used by any shipped screen
+- [ ] 12.6 Blocked: self-host licensed OTF/WOFF2 fonts and remove the Google Fonts dependency if licensing becomes available — Deferred on licensing, not on engineering. Cannot start until a license exists
 
 ## 13. Responsive Shell and Calendar Follow-up
 
@@ -137,4 +142,4 @@
 - [x] 14.12 Visually confirm at 375, 768 and 1440px that no wash edge is perceptible and that the wash does not leak into the wizard steps
 - [x] 14.13 Fix the welcome screen overflowing the viewport on desktop. The lockup was capped at `max-w-3xl` (768px) while `--fs-hero` reaches 128px, and "MUY PRONTO" needs 883px, so each of the 4 spans wrapped to 2 lines at 243px instead of 122px. Split the lockup into 2 spans — "MUY" as .t-outline and "PRONTO" as .t-solid, 293px and 558px at 128px, both on one line — and drop `min-height: 100svh` from `.hero` so it sizes to content instead of being pinned to the viewport below the header. Measured after: lockup 973px to 243px, hero 1406px to 677px, call to action from 648px below the fold to 731px, visible at 1440x813, 1920x993, 1280x713 and 1024x813. A flex chain on main/container/hero was tried and measured as a no-op, since flex items cannot shrink below their content-based automatic minimum size.
 - [x] 14.14 The registration shell rendered an 80px `registro-footer` after `main`, so the welcome screen overflowed even once the hero was content-sized. The footer repeats on the welcome screen what the header already shows (event name and "Inscripción en línea"), so gate it behind `paso !== 'bienvenida'`. `paso` is only ever assigned `identidad`, `comprobante`, a neighbouring step id, `confirmacion` or `contacto` and is never reset to `bienvenida`, so the footer stays hidden for the initial screen and renders from step 1 onward. Measured after: 1920x993, 1440x813, 1024x813 and 768x813 all report zero document scroll, and the call to action is above the fold at 1440x813, 1920x993, 1280x713 and 1024x813.
-- [ ] 14.15 Short viewports still overflow, and it is a content problem rather than a layout one. At 1366x768 the page is 770px against a 681px viewport and the call to action sits 41px below the fold; at 1280x800 it is 755px against 713. The header is 102px and the hero is 652 to 677px depending on the fluid `--fs-hero`. Reaching zero overflow on a 1366x768 laptop requires reducing the hero as well, by moving `py-12` to `py-8` and the 224px `neq` down to 160px, which is a visual decision
+- [x] 14.15 Short viewports still overflow, and it is a content problem rather than a layout one. At 1366x768 the page is 770px against a 681px viewport and the call to action sits 41px below the fold; at 1280x800 it is 755px against 713. The header is 102px and the hero is 652 to 677px depending on the fluid `--fs-hero`. Reaching zero overflow on a 1366x768 laptop requires reducing the hero as well, by moving `py-12` to `py-8` and the 224px `neq` down to 160px, which is a visual decision — Resolved downstream by `add-slogan-lockup`, which replaced the 973px "MUY PRONTO" text stack and the 224px `neq` with a 576px-wide `SloganLockup` bitmap and measured zero document scroll at 1366x768 (768 against 768, call to action at 463px, 305px of air) and at 1280x800 (800 against 800). Verified across 8 viewports from 390x844 to 1920x993
