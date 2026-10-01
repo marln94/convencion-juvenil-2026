@@ -2,6 +2,7 @@ import type { ApiClient } from '@convencion/api-client'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteInput } from '@convencion/shared-types'
 
+import { eliminarDelIndice } from './indice.js'
 import { obtenerBaseDatos } from './persistencia.js'
 
 export interface RegistroInsituEnCola extends RegistrarParticipanteInput {
@@ -12,6 +13,26 @@ export interface RegistroInsituEnCola extends RegistrarParticipanteInput {
 export type OperacionCola =
   | { id: string; tipo: 'checkin'; payload: { participantId: string }; creadoEn: string }
   | { id: string; tipo: 'registro_insitu'; payload: RegistroInsituEnCola; creadoEn: string }
+
+export type OperacionDescartada = OperacionCola & {
+  status: number
+  motivo: string
+  descartadaEn: string
+}
+
+/**
+ * Respuestas en las que reintentar el mismo payload no puede cambiar el
+ * resultado, así que la operación sale de la cola:
+ *
+ * - 400: el servidor rechazó la validación. Reintentarlo da el mismo 400.
+ * - 404: el participante no existe. Típico de un checkin encolado contra un
+ *   registro que el propio panel descartó, o que nunca llegó al servidor.
+ * - 409: el servidor ya lo tiene. No hay nada que sincronizar.
+ *
+ * Todo lo demás (401, 403, 429, 5xx, corte de red) se trata como transitorio y
+ * detiene el loop para no perder el orden de las operaciones siguientes.
+ */
+const RESPUESTAS_DEFINITIVAS = new Set([400, 404, 409])
 
 export function crearIdCola(): string {
   return `${Date.now()}-${crypto.randomUUID()}`
@@ -58,6 +79,21 @@ export async function eliminarDeCola(id: string): Promise<void> {
   await db.delete('cola', id)
 }
 
+export async function contarDescartadas(): Promise<number> {
+  const db = await obtenerBaseDatos()
+  return db.count('descartadas')
+}
+
+export async function listarDescartadas(): Promise<OperacionDescartada[]> {
+  const db = await obtenerBaseDatos()
+  return (await db.getAll('descartadas')) as OperacionDescartada[]
+}
+
+export async function limpiarDescartadas(): Promise<void> {
+  const db = await obtenerBaseDatos()
+  await db.clear('descartadas')
+}
+
 export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
   const db = await obtenerBaseDatos()
   const pendientes = (await db.getAll('cola')) as OperacionCola[]
@@ -71,16 +107,36 @@ export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
       }
       await eliminarDeCola(operacion.id)
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        // Duplicado (p. ej. dos staff registraron al mismo in situ): el servidor ya
-        // lo tiene, se descarta sin perder el QR mostrado en pantalla.
-        await eliminarDeCola(operacion.id)
+      if (error instanceof ApiError && RESPUESTAS_DEFINITIVAS.has(error.status)) {
+        await descartar(operacion, error)
       } else {
-        // Se detiene la sincronización para no perder el orden; el resto queda en cola.
+        // Transitorio: se detiene la sincronización para no perder el orden; el
+        // resto queda en cola y se reintenta en el próximo evento de red.
         break
       }
     }
   }
+}
+
+async function descartar(operacion: OperacionCola, error: ApiError): Promise<void> {
+  await eliminarDeCola(operacion.id)
+  if (operacion.tipo === 'registro_insitu') {
+    // El registro in situ escribe en el índice local antes de encolar, así que
+    // si no lo sacamos de ahí el staff ve un participante que el servidor nunca
+    // recibió, y el checkin de ese QR vuelve a fallar con 404.
+    await eliminarDelIndice(operacion.payload.participantId)
+  }
+  const db = await obtenerBaseDatos()
+  const descartada: OperacionDescartada = {
+    ...operacion,
+    status: error.status,
+    motivo: error.message,
+    descartadaEn: new Date().toISOString()
+  }
+  await db.put('descartadas', descartada)
+  console.warn(
+    `[cola] operación descartada (${error.status}): ${operacion.tipo} ${operacion.id} — ${error.message}`
+  )
 }
 
 async function putCola(operacion: OperacionCola): Promise<void> {

@@ -14,6 +14,11 @@ const base = {
   rol: 'joven' as const
 }
 
+// `base` solo es valido en in situ: un registro online exige comprobante.
+// Los tests de edad necesitan un payload que solo falle por la edad, asi que
+// se los apoya sobre este fixture completo.
+const onlineCompleto = { ...base, comprobante: { contentType: 'image/png', s3Key: 'comprobantes/a.png' } }
+
 function legible(payload: unknown): string {
   const resultado = registrarParticipanteSchema.safeParse(payload)
   if (resultado.success) {
@@ -198,6 +203,48 @@ describe('registrarParticipanteSchema', () => {
       rol: 'joven'
     })
     expect(resultado.success).toBe(true)
+  })
+
+  it('acepta joven en el borde inferior de la banda', () => {
+    expect(registrarParticipanteSchema.safeParse({ ...onlineCompleto, rol: 'joven', edad: 15 }).success).toBe(true)
+  })
+
+  it('acepta joven en el borde superior de la banda', () => {
+    expect(registrarParticipanteSchema.safeParse({ ...onlineCompleto, rol: 'joven', edad: 30 }).success).toBe(true)
+  })
+
+  it('rechaza joven un año por encima de la banda', () => {
+    expect(legible({ ...onlineCompleto, rol: 'joven', edad: 31 })).toBe('Edad no permitida')
+  })
+
+  it('rechaza joven por debajo de la banda', () => {
+    expect(legible({ ...onlineCompleto, rol: 'joven', edad: 14 })).toBe('Edad no permitida')
+  })
+
+  it('acepta encargado fuera de la banda de joven', () => {
+    expect(registrarParticipanteSchema.safeParse({ ...onlineCompleto, rol: 'encargado', edad: 45 }).success).toBe(true)
+  })
+
+  it('acepta nexo en el máximo del rango estándar', () => {
+    expect(registrarParticipanteSchema.safeParse({ ...onlineCompleto, rol: 'nexo', edad: 99 }).success).toBe(true)
+  })
+
+  it('rechaza edad sobre el máximo para roles no jóvenes', () => {
+    expect(legible({ ...onlineCompleto, rol: 'encargado', edad: 100 })).toBe('Edad no permitida')
+  })
+
+  it('rechaza edad decimal', () => {
+    expect(legible({ ...onlineCompleto, edad: 25.5 })).toBe('Edad no permitida')
+  })
+
+  it('rechaza edad no numérica', () => {
+    expect(legible({ ...onlineCompleto, edad: 'mucha' })).toBe('Edad no permitida')
+  })
+
+  it('reporta un solo issue cuando la edad falla el rango duro y la banda', () => {
+    const resultado = registrarParticipanteSchema.safeParse({ ...onlineCompleto, rol: 'joven', edad: 5 })
+    expect(resultado.success).toBe(false)
+    expect(resultado.success === false && resultado.error.issues).toHaveLength(1)
   })
 })
 

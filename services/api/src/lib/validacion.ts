@@ -1,3 +1,4 @@
+import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
 import { z } from 'zod'
 
 import { CONTENT_TYPES_PERMITIDOS } from './comprobante.js'
@@ -49,7 +50,13 @@ const localidadSchema = z.string().trim().min(1, { message: 'La localidad es obl
 
 const regionSchema = z.enum(REGIONES, { message: 'Seleccioná una región válida' })
 
-const edadSchema = z.number().int().positive({ message: 'La edad debe ser un número positivo' })
+const EDAD_NO_PERMITIDA = 'Edad no permitida'
+
+const edadSchema = z
+  .number({ message: EDAD_NO_PERMITIDA })
+  .int({ message: EDAD_NO_PERMITIDA })
+  .min(EDAD_MINIMA, { message: EDAD_NO_PERMITIDA })
+  .max(EDAD_MAXIMA, { message: EDAD_NO_PERMITIDA })
 
 const diasAsistenciaSchema = z.array(z.enum(DIAS_ASISTENCIA)).min(1, { message: 'Seleccioná al menos un día de asistencia' })
 
@@ -73,6 +80,19 @@ export const registrarParticipanteSchema = z
     comprobante: comprobanteSchema.optional()
   })
   .superRefine((datos, ctx) => {
+    // El limite de `joven` depende del rol, asi que no puede vivir solo en el
+    // schema de `edad`. La guarda evita un segundo issue con el mismo mensaje
+    // cuando la edad ya fallo el rango duro.
+    if (datos.rol === 'joven' && datos.edad >= EDAD_MINIMA && datos.edad <= EDAD_MAXIMA) {
+      const rango = rangoEdadPermitido('joven')
+      if (datos.edad < rango.min || datos.edad > rango.max) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['edad'],
+          message: EDAD_NO_PERMITIDA
+        })
+      }
+    }
     if (
       datos.esRegistroPorEncargado &&
       (!datos.encargadoNombre?.trim() || !datos.encargadoContacto?.trim())

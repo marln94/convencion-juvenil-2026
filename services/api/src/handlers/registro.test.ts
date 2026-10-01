@@ -211,10 +211,49 @@ describe('validaciones de datos', () => {
     expect(await res.json()).toEqual({ message: 'Seleccioná una región válida' })
   })
 
-  it('rechaza edad no positiva', async () => {
-    const res = await post('/inscripciones', { ...onlineValido, edad: 0 })
+  it('rechaza edad por debajo del mínimo', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, edad: 14 })
     expect(res.status).toBe(400)
-    expect(await res.json()).toEqual({ message: 'La edad debe ser un número positivo' })
+    expect(await res.json()).toEqual({ message: 'Edad no permitida' })
+  })
+
+  it('rechaza edad mayor a 99', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, edad: 100 })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Edad no permitida' })
+  })
+
+  it('rechaza edad decimal', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, edad: 25.5 })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Edad no permitida' })
+  })
+
+  it('acepta joven en el borde superior de la banda', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, rol: 'joven', edad: 30 })
+    expect(res.status).toBe(201)
+    expect(crearParticipanteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ rol: 'joven', edad: 30 })
+    )
+  })
+
+  it('rechaza joven fuera de banda', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, rol: 'joven', edad: 32 })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'Edad no permitida' })
+  })
+
+  it('acepta encargado con edad fuera de la banda de joven', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, rol: 'encargado', edad: 45 })
+    expect(res.status).toBe(201)
+    expect(crearParticipanteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ rol: 'encargado', edad: 45 })
+    )
+  })
+
+  it('acepta encargado en el máximo del rango estándar', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, rol: 'encargado', edad: 99 })
+    expect(res.status).toBe(201)
   })
 
   it('rechaza sin diasAsistencia', async () => {

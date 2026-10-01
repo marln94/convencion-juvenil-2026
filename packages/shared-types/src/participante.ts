@@ -1,3 +1,5 @@
+import type { Rol } from './edad.js'
+
 export type EstadoPago = 'pendiente' | 'pagado' | 'rechazado'
 
 export type TipoRegistro = 'online' | 'in_situ'
@@ -11,7 +13,7 @@ export interface Participante {
   region: string
   edad: number
   diasAsistencia: string[]
-  rol: 'joven' | 'encargado' | 'nexo'
+  rol: Rol
   esRegistroPorEncargado: boolean
   encargadoNombre?: string
   encargadoContacto?: string

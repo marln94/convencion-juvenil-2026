@@ -9,6 +9,7 @@ export { StepIndicator, type StepIndicatorProps } from "./StepIndicator";
 export { CheckboxGroup, type CheckboxGroupProps, type CheckboxOption } from "./CheckboxGroup";
 export { DayPicker, type DayPickerProps, type DayOption } from "./DayPicker";
 export { VistaHeader, type VistaHeaderProps } from "./VistaHeader";
+export { EdadField, edadEnRango, type EdadFieldProps, type RangoEdad } from "./EdadField";
 
 // Re-export layout components
 export { Container, type ContainerProps } from "../layout/Container";

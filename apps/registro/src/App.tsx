@@ -2,9 +2,10 @@ import type { FormEvent } from 'react'
 import { Fragment, useCallback, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
-import type { RegistrarParticipanteOutput } from '@convencion/shared-types'
+import type { RegistrarParticipanteOutput, Rol } from '@convencion/shared-types'
+import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
 
-import { Alert, Button, Card, DayPicker, Input, Select, StepIndicator, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, StepIndicator, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { SloganLockup } from '@convencion/ui/components/decorative'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
@@ -30,8 +31,19 @@ interface DatosFormulario {
   region: string
   edad: string
   diasAsistencia: string[]
-  rol: 'joven' | 'encargado' | 'nexo'
+  rol: Rol
 }
+
+const TODOS_LOS_CAMPOS = [
+  'nombre',
+  'contacto',
+  'correo',
+  'localidad',
+  'region',
+  'edad',
+  'diasAsistencia',
+  'rol'
+] as const satisfies readonly (keyof DatosFormulario)[]
 
 const DATOS_INICIALES: DatosFormulario = {
   nombre: '',
@@ -151,8 +163,7 @@ export function App() {
         case 'edad': {
           const v = datos.edad.trim()
           if (!v) return 'La edad es obligatoria'
-          const edadNum = parseInt(v, 10)
-          if (isNaN(edadNum) || edadNum < 1) return 'La edad debe ser un número positivo'
+          if (!edadEnRango(v, rangoEdadPermitido(datos.rol))) return 'Edad no permitida'
           return undefined
         }
         case 'diasAsistencia': {
@@ -172,16 +183,26 @@ export function App() {
     [datos]
   )
 
-  const validarPasoActual = useCallback((): ErroresFormulario => {
+  const validarCampos = useCallback((campos: readonly (keyof DatosFormulario)[]): ErroresFormulario => {
     const errores: ErroresFormulario = {}
-    for (const campo of camposPasoActual) {
+    for (const campo of campos) {
       const error = validarCampo(campo)
       if (error) {
         errores[campo] = error
       }
     }
     return errores
-  }, [validarCampo, camposPasoActual])
+  }, [validarCampo])
+
+  const validarPasoActual = useCallback(
+    (): ErroresFormulario => validarCampos(camposPasoActual),
+    [validarCampos, camposPasoActual]
+  )
+
+  const validarTodosLosCampos = useCallback(
+    (): ErroresFormulario => validarCampos(TODOS_LOS_CAMPOS),
+    [validarCampos]
+  )
 
   const actualizar = (campo: keyof DatosFormulario) => (valor: string | string[]) => {
     setDatos((actuales) => ({ ...actuales, [campo]: valor }))
@@ -276,6 +297,18 @@ export function App() {
 
   const enviarRegistro = async () => {
     if (!adjunto) {
+      return
+    }
+    // El wizard ya valida paso a paso, pero el botón final no pasa por
+    // `siguientePaso`: sin este gate, editar el rol en un paso anterior
+    // podría dejar la edad fuera del rango nuevo y postear un payload que la
+    // API va a rechazar.
+    const errores = validarTodosLosCampos()
+    if (Object.keys(errores).length > 0) {
+      setTocados(Object.keys(TODOS_LOS_CAMPOS).reduce<Record<string, boolean>>((acc, campo) => {
+        acc[campo] = true
+        return acc
+      }, {}))
       return
     }
     setEnviando(true)
@@ -403,14 +436,15 @@ export function App() {
                                   />
                                 )}
                                 {campo === 'edad' && (
-                                  <Input
+                                  <EdadField
                                     label="Edad"
                                     value={datos.edad}
                                     onChange={actualizar('edad')}
                                     onBlur={() => tocar('edad')}
                                     required
-                                    type="number"
-                                    min="1"
+                                    minimo={EDAD_MINIMA}
+                                    maximo={EDAD_MAXIMA}
+                                    rangoPermitido={rangoEdadPermitido(datos.rol)}
                                     placeholder="Edad en años"
                                     error={errorDe('edad')}
                                   />

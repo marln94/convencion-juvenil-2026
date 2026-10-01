@@ -30,6 +30,13 @@ Estado de la implementación del sistema de diseño para la Convención Juvenil 
 - El gafete PNG (`apps/registro/src/lib/gafete.ts`) se dibuja en canvas a 2× y exporta 1280 px de ancho, unos 10.8 × 14.1 cm a 300 DPI, para que sea imprimible. Es **light-only por construcción**: lee `--color-paper-light`, `--color-ink`, `--color-ink-fade` y `--color-red`, nunca los alias `--color-bg` ni `--color-text`, que son los únicos que se intercambian bajo `.theme-dark`. Un gafete oscuro con el QR invertido sería ilegible en la puerta y sobre el papel.
 - El fondo del gafete es deliberadamente plano, sin la textura de papel: el asset sigue siendo un placeholder y un tile escalado a 1280 es ruido alrededor de un QR.
 - El QR del gafete no lleva logo, marco ni borde propios, y el `--color-red` no se usa en los módulos. Los módulos van `--color-ink` sobre `--color-paper-light` (18.97:1); cualquier color de contraste reducido degrada el escaneo en la puerta y más todavía en impresión.
+- `EdadField` (`packages/ui/src/components/ui/EdadField.tsx`) apila el input numérico y, cuando recibe `rangoPermitido`, un `<input type="range">` nativo con la banda del rol marcada. El track abarca **15 a 99**, el dominio duro completo, y no el rango del rol: el thumb tiene que poder contradecir al rango permitido, porque es justamente lo que señala que la edad capturada no va a pasar. La banda no es decorativa ni consultiva; el componente solo la dibuja y el formulario decide si bloquea.
+- Los límites viven en `@convencion/shared-types` (`edad.ts`), no en el componente ni duplicados en cada app: el cliente bloquea con ellos y la API rechaza con los mismos, así que un desfase entre copias se convierte en pérdida silenciosa de registros. `rangoEdadPermitido(rol)` es el único lugar que decide el rango por rol, y `edadEnRango` es el predicado compartido por los dos formularios.
+- La banda es un overlay absoluto (`.edad-field__band`) posicionado con las custom properties `--banda-inicio` y `--banda-fin`, que el componente calcula como **fracciones** de 0 a 1, no como porcentajes. El CSS no conoce 15 ni 30.
+- La banda se mide sobre el ancho útil del track (`100% - var(--thumb)`) y arranca en `var(--thumb) / 2`, porque el range nativo no apoya el extremo en el borde del contenedor: reserva media unidad de thumb hacia adentro. Con la banda de joven arrancando en 0% (su mínimo, 15, es el mínimo del track), el desfase era visible; las fracciones lo hacen explícito.
+- La banda usa `rgb(var(--color-red-rgb) / 0.16)`: se compone el canal alfa explícito en vez de `color-mix()`, porque Lightning CSS degrada `color-mix()` a un fallback que pierde el alfa y deja un lavado opaco (`tokens.css:18-21`).
+- El thumb del deslizante es cuadrado: `border-radius: var(--radius)` (0), borde 2px `var(--color-ink)` y relleno `var(--color-accent)`. El track también lleva borde 2px para que el conjunto lea como un control del design system y no como un widget del navegador.
+- El foco del deslizante sigue la familia de form controls, no la de outline: `.edad-field__track:focus-within` transiciona el borde a `--color-red-deep` sin outline. Con `:focus-within` en lugar de `:focus-visible` porque el foco del range nativo se propaga al track contenedor.
 
 ## Assets y su preparación
 
@@ -127,6 +134,8 @@ requiere tocar specs ni código.
 - Rojo oscuro `#8E0B12` sobre paper `#EDEDED`: 8.13:1; opción accesible para texto normal.
 - White sobre rojo `#D90D0D`: 5.23:1.
 - White sobre negro `#0A0A0A`: 19.80:1.
+- Thumb del deslizante de edad, rojo `#D90D0D` sobre paper-light `#FAFAFA`: 5.01:1.
+- Thumb del deslizante de edad contra la zona de banda `#F5D4D4` (rojo al 16% sobre paper-light): 3.80:1, por encima del 3:1 de WCAG 1.4.11 para elementos de UI. El borde del thumb (ink `#0A0A0A`) contra la banda da 14.38:1, así que la posición del thumb se sigue leyendo aunque el relleno coincidiera con la zona.
 
 ## Verificación manual completada
 

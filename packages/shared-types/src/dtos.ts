@@ -1,3 +1,4 @@
+import type { Rol } from './edad.js'
 import type { Participante, EstadoPago, TipoRegistro } from './participante.js'
 
 export interface RegistrarParticipanteInput {
@@ -9,7 +10,7 @@ export interface RegistrarParticipanteInput {
   region: string
   edad: number
   diasAsistencia: string[]
-  rol: 'joven' | 'encargado' | 'nexo'
+  rol: Rol
   esRegistroPorEncargado?: boolean
   encargadoNombre?: string
   encargadoContacto?: string

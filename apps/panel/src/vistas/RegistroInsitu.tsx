@@ -1,8 +1,9 @@
-import type { Participante, RegistrarParticipanteOutput } from '@convencion/shared-types'
+import type { Participante, RegistrarParticipanteOutput, Rol } from '@convencion/shared-types'
+import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 
-import { Alert, Button, Card, DayPicker, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { agregarAlIndice } from '../lib/indice'
@@ -56,7 +57,7 @@ interface DatosFormulario {
   region: string
   edad: string
   diasAsistencia: string[]
-  rol: 'joven' | 'encargado' | 'nexo'
+  rol: Rol
   esRegistroPorEncargado: boolean
   encargadoNombre: string
   encargadoContacto: string
@@ -86,8 +87,7 @@ function validar(datos: DatosFormulario): string | null {
   if (!datos.region) return 'Seleccioná una región válida'
   if (!REGIONES.some(([r]) => r === datos.region)) return 'Seleccioná una región válida'
   if (!datos.edad.trim()) return 'La edad es obligatoria'
-  const edadNum = parseInt(datos.edad, 10)
-  if (isNaN(edadNum) || edadNum < 1) return 'La edad debe ser un número positivo'
+  if (!edadEnRango(datos.edad.trim(), rangoEdadPermitido(datos.rol))) return 'Edad no permitida'
   if (!datos.diasAsistencia || datos.diasAsistencia.length === 0) return 'Seleccioná al menos un día de asistencia'
   if (!datos.diasAsistencia.every((d) => DIAS_ASISTENCIA_OPTIONS.some((dia) => dia.value === d))) return 'Día de asistencia inválido'
   if (!datos.rol) return 'Seleccioná un rol válido'
@@ -229,19 +229,27 @@ export function VistaRegistroInsitu() {
             options={REGIONES}
             required
           />
-          <Input label="Edad" value={datos.edad} onChange={(v) => actualizar('edad', v)} type="number" min="1" required />
-          <DayPicker
-            label="Días de asistencia"
-            days={DIAS_ASISTENCIA_OPTIONS}
-            value={datos.diasAsistencia}
-            onChange={(val) => actualizar('diasAsistencia', val)}
-            required
-          />
           <Select
             label="Rol"
             value={datos.rol}
             onChange={(v) => actualizar('rol', v as 'joven' | 'encargado' | 'nexo')}
             options={ROLES}
+            required
+          />
+          <EdadField
+            label="Edad"
+            value={datos.edad}
+            onChange={(v) => actualizar('edad', v)}
+            minimo={EDAD_MINIMA}
+            maximo={EDAD_MAXIMA}
+            rangoPermitido={rangoEdadPermitido(datos.rol)}
+            required
+          />
+          <DayPicker
+            label="Días de asistencia"
+            days={DIAS_ASISTENCIA_OPTIONS}
+            value={datos.diasAsistencia}
+            onChange={(val) => actualizar('diasAsistencia', val)}
             required
           />
 

@@ -1,24 +1,36 @@
 import { useSyncExternalStore } from 'react'
 
 import { api } from './api.js'
-import { contarPendientes, sincronizarCola } from './cola.js'
+import { contarDescartadas, contarPendientes, sincronizarCola } from './cola.js'
 
 let enLinea = navigator.onLine
 let sincronizando = false
 let conteoPendientes = 0
+let conteoDescartadas = 0
 
 interface EstadoRed {
   enLinea: boolean
   sincronizando: boolean
   pendientes: number
+  descartadas: number
 }
 
-let instantanea: EstadoRed = { enLinea, sincronizando, pendientes: conteoPendientes }
+let instantanea: EstadoRed = {
+  enLinea,
+  sincronizando,
+  pendientes: conteoPendientes,
+  descartadas: conteoDescartadas
+}
 
 const subscriptores = new Set<() => void>()
 
 function refrescarInstantanea(): void {
-  instantanea = { enLinea, sincronizando, pendientes: conteoPendientes }
+  instantanea = {
+    enLinea,
+    sincronizando,
+    pendientes: conteoPendientes,
+    descartadas: conteoDescartadas
+  }
 }
 
 function emitir(): void {
@@ -41,6 +53,7 @@ window.addEventListener('offline', () => cambiarEnLinea(false))
 
 export async function refrescarPendientes(): Promise<void> {
   conteoPendientes = await contarPendientes()
+  conteoDescartadas = await contarDescartadas()
   emitir()
 }
 

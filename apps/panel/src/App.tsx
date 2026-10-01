@@ -103,18 +103,34 @@ function Login({ alIngresar }: { alIngresar: () => void }) {
 }
 
 function IndicadorConexion() {
-  const { enLinea, sincronizando, pendientes } = useEstadoRed()
+  const { enLinea, sincronizando, pendientes, descartadas } = useEstadoRed()
 
-  if (!enLinea) {
-    return <Pill variant="amber">Sin conexión</Pill>
+  const principal = !enLinea
+    ? <Pill variant="amber">Sin conexión</Pill>
+    : sincronizando
+      ? <Pill variant="default">Sincronizando…</Pill>
+      : pendientes > 0
+        ? <Pill variant="amber">{pendientes} sin sincronizar</Pill>
+        : <Pill variant="green">En línea</Pill>
+
+  if (descartadas === 0) {
+    return principal
   }
-  if (sincronizando) {
-    return <Pill variant="default">Sincronizando…</Pill>
-  }
-  if (pendientes > 0) {
-    return <Pill variant="amber">{pendientes} sin sincronizar</Pill>
-  }
-  return <Pill variant="green">En línea</Pill>
+
+  // Las descartadas son operaciones que el servidor rechazó de forma
+  // definitiva. Salen de la cola, así que no aparecen en el contador de
+  // pendientes: sin este indicador, un registro rechazado sería invisible.
+  return (
+    <span className="flex items-center gap-2">
+      {principal}
+      <Pill
+        variant="red"
+        title={`${descartadas} ${descartadas === 1 ? 'operación rechazada' : 'operaciones rechazadas'} por el servidor. Hay que registrarlas de nuevo.`}
+      >
+        {descartadas} rechazadas
+      </Pill>
+    </span>
+  )
 }
 
 function Panel({ sesion }: { sesion: SesionPanel }) {

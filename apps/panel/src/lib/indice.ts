@@ -16,6 +16,17 @@ export async function agregarAlIndice(item: ResumenParticipante): Promise<void> 
   await db.put('indice', item)
 }
 
+/**
+ * Quita al participante del índice local. Se usa cuando una operación encolada
+ * se descarta: el índice se escribe en el momento del encolado, sin esperar al
+ * servidor, así que si no lo limpiamos queda un participante fantasma que el
+ * staff puede buscar y escanear.
+ */
+export async function eliminarDelIndice(participantId: string): Promise<void> {
+  const db = await obtenerBaseDatos()
+  await db.delete('indice', participantId)
+}
+
 export async function obtenerDelIndice(
   participantId: string
 ): Promise<ResumenParticipante | undefined> {

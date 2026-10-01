@@ -30,6 +30,7 @@ const requiredSelectors = [
   ".nav__item",
   ".nav__item--active",
   ".day-picker__grid",
+  ".edad-field__slider",
 ];
 
 function relativeLuminance(hex) {
