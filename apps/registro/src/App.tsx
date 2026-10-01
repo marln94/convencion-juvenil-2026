@@ -590,16 +590,6 @@ export function App() {
             </Fragment>
           </Container>
         </main>
-
-        {paso !== 'bienvenida' && (
-          <footer className="registro-footer no-print mt-auto shrink-0">
-            <Container>
-              <p className="py-3 text-center text-xs md:py-8" style={{ color: 'var(--color-ink-soft)' }}>
-                {NOMBRE_CONVENCION} · Inscripción en línea
-              </p>
-            </Container>
-          </footer>
-        )}
       </div>
     </Fragment>
   )

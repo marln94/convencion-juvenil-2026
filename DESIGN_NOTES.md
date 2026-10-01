@@ -24,7 +24,8 @@ Estado de la implementación del sistema de diseño para la Convención Juvenil 
 - El eslogan es **light-only por construcción**, igual que el gafete: el arte es tinta sobre transparencia (75.9% del canvas es alfa 0) y no sobrevive un fondo oscuro. `.theme-dark` sigue sin aplicarse en ninguna app.
 - El WebP declara `width={1664} height={667}` para reservar el espacio antes de que cargue el bitmap. Son las dimensiones de la **caja del archivo**, no las del artwork: el PNG de origen tenía 5.0% de padding superior y 1.1-1.3% lateral, y recortar el padding del diseñador no es reversible. Usar el ratio del artwork (2.6060) en vez del del archivo (2.4945) dejaría la altura reservada ~1.7% corta y produciría un salto visible.
 - El lockup no usa `mix-blend-mode`. El asset tiene canal alfa real, así que se compone directo sobre el paper, el brillo radial y el `paper-noise` sin caja blanca ni costura de textura. `multiply` (el patrón de `Brush`) oscurecería la tinta ~7% y apagaría el rojo; queda reservado para assets que sí traigan fondo.
-- El `registro-footer` (80px) se oculta solo en `bienvenida`, donde repite lo que el header ya muestra. `paso` nunca vuelve a `'bienvenida'`, así que el footer aparece desde el primer paso del wizard en adelante.
+- Ya no hay `registro-footer`. Repetía textualmente el header (el nombre del evento y "Inscripción en línea", las mismas dos cadenas), así que se eliminó en lugar de ocultarse en `bienvenida` como había hecho la tarea 14.14 de `2026-09-29-apply-design-system-19-convencion`. Ese archivo archivado queda como registro de por qué el footer *estaba* donde estaba.
+- El inset inferior del dispositivo (`env(safe-area-inset-bottom)`) lo aplica ahora `.registro-main` y no el chrome que lo rodea. Bajo 768px `main` es el contenedor desplazable, así que el padding se convierte en espacio al final del área scrolleable y el contenido pasa *por debajo* del indicador de inicio. Ponerlo en `.registro-shell` lo consumiría del alto de `main` (`height: 100dvh` + `overflow: hidden`), que es justo el espacio que hace falta cuando un paso no cabe. Era el único portador del inset inferior en `apps/registro`.
 - Brush no se imprime (`display: none` en `@media print`) porque una capa fija se repite en cada página.
 - Brush usa `screen` bajo `.theme-dark`; `multiply` de rojo sobre `#0A0A0A` es negro y la mancha desaparecería. Preventive: `.theme-dark` todavía no se aplica en ninguna app.
 - El gafete PNG (`apps/registro/src/lib/gafete.ts`) se dibuja en canvas a 2× y exporta 1280 px de ancho, unos 10.8 × 14.1 cm a 300 DPI, para que sea imprimible. Es **light-only por construcción**: lee `--color-paper-light`, `--color-ink`, `--color-ink-fade` y `--color-red`, nunca los alias `--color-bg` ni `--color-text`, que son los únicos que se intercambian bajo `.theme-dark`. Un gafete oscuro con el QR invertido sería ilegible en la puerta y sobre el papel.
@@ -121,8 +122,12 @@ requiere tocar specs ni código.
   Ninguno de los nueve desplaza. En viewports donde el contenido no cabe (probado hasta
   360×320) el bloque se ancla arriba sin recortarse: el slogan sigue visible, el botón sigue
   alcanzable y no hay corte superior. El salto del wizard se comprobó en 1366×768 y 390×844:
-  al entrar, `registro-main--centrado` desaparece, el indicador de pasos y el footer siguen
-  presentes y el primer campo arranca 102px y 76px desde arriba.
+  al entrar, `registro-main--centrado` desaparece y el primer campo arranca 102px y 76px desde
+  arriba. Con el footer eliminado, bajo 768px el área desplazable de `main` gana 40px (los
+  `py-3` más la línea de texto del footer de móvil, no los 80px que ocupaba en escritorio con
+  `py-8`), así que los pasos del asistente quedaron con más alto útil. Re-medido sobre el
+  build tras el cambio: los siete anchos de la tabla de arriba dan los mismos valores de
+  documento, header, eslogan y CTA, porque en `bienvenida` el footer nunca se renderizó.
 - El padding superior del asset (5.0%) baja el centro óptico del eslogan ~2.5% respecto de
   su bounding box visual. Se conserva el padding del diseñador en vez de recortar; si molesta
   en el recorrido visual, se ajusta el `padding-block` del contenedor, no el asset.

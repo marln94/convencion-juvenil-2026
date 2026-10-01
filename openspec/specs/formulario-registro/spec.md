@@ -208,7 +208,7 @@ del sistema y SHALL continuar generando el gafete.
 ### Requirement: Diseño responsive y mobile friendly
 
 
-El formulario SHALL funcionar correctamente en celulares y tablets: sin desplazamiento horizontal, con gutters laterales visibles, con campos y botones de toque grandes, y con las acciones principales a ancho completo apiladas cuando la pantalla es angosta. Por debajo de 768px SHALL mantener el header y el footer fuera del área desplazable, SHALL impedir el scroll del documento y SHALL permitir que solo el contenido principal se desplace cuando un paso no quepa en el viewport.
+El formulario SHALL funcionar correctamente en celulares y tablets: sin desplazamiento horizontal, con gutters laterales visibles, con campos y botones de toque grandes, y con las acciones principales a ancho completo apiladas cuando la pantalla es angosta. Por debajo de 768px SHALL mantener el header fuera del área desplazable, SHALL impedir el scroll del documento y SHALL permitir que solo el contenido principal se desplace cuando un paso no quepa en el viewport. El contenido desplazable SHALL reservar el inset inferior del dispositivo para que la última fila de acciones nunca quede bajo el indicador de inicio.
 
 #### Scenario: Uso desde un celular
 
@@ -218,7 +218,7 @@ El formulario SHALL funcionar correctamente en celulares y tablets: sin desplaza
 #### Scenario: Paso más alto que el viewport
 
 - **WHEN** un paso del formulario necesita más altura que el viewport móvil
-- **THEN** solo el área principal de contenido se desplaza y el header y el footer permanecen visibles
+- **THEN** solo el área principal de contenido se desplaza y el header permanece visible
 
 #### Scenario: Teclado virtual abierto
 
@@ -229,6 +229,16 @@ El formulario SHALL funcionar correctamente en celulares y tablets: sin desplaza
 
 - **WHEN** se imprime la pantalla de confirmación
 - **THEN** el documento recupera su flujo normal y el contenido no queda recortado por el shell de altura fija
+
+#### Scenario: Identidad del evento en pantalla
+
+- **WHEN** el participante ve la pantalla de bienvenida o cualquier paso del asistente
+- **THEN** el nombre del evento y la etiqueta de inscripción en línea aparecen una sola vez, en el header
+
+#### Scenario: Acciones bajo el indicador de inicio
+
+- **WHEN** el participante ve el último paso del asistente en un dispositivo con inset inferior
+- **THEN** los botones de acción quedan por encima del indicador de inicio y son alcanzables sin scroll adicional
 
 ### Requirement: Errores de la API visibles
 

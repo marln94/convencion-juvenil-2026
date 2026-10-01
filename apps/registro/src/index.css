@@ -35,8 +35,15 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* El inset inferior del dispositivo vive en `main` y no en el chrome que lo rodea
+   porque, bajo 768px, `main` es el contenedor desplazable: el padding se convierte en
+   espacio al final del área scrolleable y el contenido pasa *por debajo* del indicador
+   de inicio en vez de quedar recortado por él. Ponerlo en `.registro-shell` lo
+   consumiría del alto de `main` (`height: 100dvh` + `overflow: hidden`), que es
+   justamente el espacio que se necesita cuando un paso no cabe. */
 .registro-main {
   min-height: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* La pantalla de bienvenida es una sola acción, así que su contenido se centra en
@@ -56,10 +63,6 @@
 
 .registro-main--centrado > .container {
   margin-block: auto;
-}
-
-.registro-footer {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (max-width: 767px) {
