@@ -51,6 +51,7 @@ export function VistaPagos() {
         participantId: item.participantId,
         nombre: item.nombre,
         estadoPago: resultado.participante.estadoPago,
+        fechaRegistro: resultado.participante.fechaRegistro,
         equipoColor: resultado.participante.equipoColor,
         checkIn: resultado.participante.checkIn,
       })

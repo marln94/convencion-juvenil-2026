@@ -1,6 +1,6 @@
 import { ApiError } from '@convencion/api-client'
 import type { ResumenParticipante } from '@convencion/shared-types'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Alert, Button, Card, Container, Input, Pill, Section, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
@@ -13,6 +13,12 @@ interface Estadisticas {
   pendientes: number
   inSitu: number
   llegados: number
+}
+
+const LIMITE_LISTA = 10
+
+function porFechaDesc(a: ResumenParticipante, b: ResumenParticipante): number {
+  return (b.fechaRegistro ?? '').localeCompare(a.fechaRegistro ?? '')
 }
 
 function calcularEstadisticas(items: ResumenParticipante[]): Estadisticas {
@@ -39,6 +45,7 @@ export function VistaDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [filtro, setFiltro] = useState('')
   const [resultados, setResultados] = useState<ResumenParticipante[]>([])
+  const busquedaEnCurso = useRef(0)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -64,14 +71,21 @@ export function VistaDashboard() {
   }, [cargar])
 
   useEffect(() => {
+    const solicitud = ++busquedaEnCurso.current
     if (!filtro.trim()) {
       setResultados([])
       return
     }
-    void buscarEnIndice(filtro).then((coincidencias) => setResultados(coincidencias.slice(0, 30)))
+    void buscarEnIndice(filtro).then((coincidencias) => {
+      if (solicitud !== busquedaEnCurso.current) return
+      setResultados([...coincidencias].sort(porFechaDesc))
+    })
   }, [filtro])
 
   const estadisticas = useMemo(() => calcularEstadisticas(todos), [todos])
+  const ordenados = useMemo(() => [...todos].sort(porFechaDesc), [todos])
+  const conFiltro = filtro.trim().length > 0
+  const visibles = conFiltro ? resultados : ordenados.slice(0, LIMITE_LISTA)
 
   return (
     <Container>
@@ -114,8 +128,19 @@ export function VistaDashboard() {
         />
       </div>
 
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="font-bold" style={{ color: 'var(--color-text)' }}>
+          {conFiltro ? `${resultados.length} coincidencias para «${filtro.trim()}»` : 'Últimos inscritos'}
+        </h2>
+        {conFiltro ? null : (
+          <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>
+            Mostrando los {LIMITE_LISTA} más recientes de {todos.length}
+          </p>
+        )}
+      </div>
+
       <ul className="flex flex-col gap-2">
-        {resultados.map((participante) => (
+        {visibles.map((participante) => (
           <Card key={participante.participantId} className="flex items-center justify-between gap-3 p-3">
             <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
               {participante.nombre}
@@ -130,7 +155,7 @@ export function VistaDashboard() {
             </div>
           </Card>
         ))}
-        {filtro.trim() && resultados.length === 0 && (
+        {conFiltro && resultados.length === 0 && (
           <li>
             <Alert variant="info">Sin coincidencias</Alert>
           </li>

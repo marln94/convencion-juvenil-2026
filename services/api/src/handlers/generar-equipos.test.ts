@@ -78,6 +78,7 @@ const resumenRojo: ResumenParticipante = {
   participantId: 'id-1',
   nombre: 'Participante id-1',
   estadoPago: 'pagado',
+  fechaRegistro: '2026-09-01T00:00:00.000Z',
   equipoColor: 'rojo',
   checkIn: false
 }

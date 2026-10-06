@@ -15,6 +15,7 @@ function aResumen(participante: Participante): ResumenParticipante {
     participantId: participante.participantId,
     nombre: participante.nombre,
     estadoPago: participante.estadoPago,
+    fechaRegistro: participante.fechaRegistro,
     equipoColor: participante.equipoColor,
     checkIn: participante.checkIn,
   }

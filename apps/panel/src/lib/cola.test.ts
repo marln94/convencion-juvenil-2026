@@ -52,6 +52,7 @@ function resumen(participantId: string): ResumenParticipante {
     participantId,
     nombre: 'Ana Pérez',
     estadoPago: 'pendiente',
+    fechaRegistro: '2026-09-01T00:00:00.000Z',
     tipoRegistro: 'in_situ',
     checkIn: false
   }

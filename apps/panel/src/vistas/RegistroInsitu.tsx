@@ -145,6 +145,7 @@ export function VistaRegistroInsitu() {
         participantId,
         nombre: payload.nombre,
         estadoPago: 'pagado',
+        fechaRegistro: new Date().toISOString(),
         checkIn: false,
       })
       const sinConectar = !navigator.onLine

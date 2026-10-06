@@ -30,6 +30,7 @@ export interface ResumenParticipante {
   participantId: string
   nombre: string
   estadoPago: EstadoPago
+  fechaRegistro: string
   tipoRegistro?: TipoRegistro
   equipoColor?: string
   checkIn: boolean

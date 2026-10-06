@@ -12,7 +12,9 @@ cuando no hay código QR disponible.
 
 El sistema SHALL devolver la lista completa de participantes paginada, con filtros opcionales por
 `estadoPago`, `tipoRegistro` y `checkIn`, y SHALL devolver los participantes de un `estadoPago`
-dado ordenados por fecha de registro (descendente).
+dado ordenados por fecha de registro (descendente). Cada ítem del listado SHALL incluir la
+`fechaRegistro` del participante, de modo que el cliente pueda ordenar la lista completa por fecha
+de registro incluso cuando no se aplica ningún filtro.
 
 #### Scenario: Listado sin filtros
 
@@ -29,6 +31,11 @@ dado ordenados por fecha de registro (descendente).
 
 - **WHEN** se solicita una página posterior a la primera
 - **THEN** el sistema devuelve la página correspondiente sin repetir ni omitir registros
+
+#### Scenario: Fecha de registro en cada ítem
+
+- **WHEN** se solicita el listado con o sin filtros
+- **THEN** cada ítem devuelto incluye su `fechaRegistro`
 
 ### Requirement: Detalle de participante
 

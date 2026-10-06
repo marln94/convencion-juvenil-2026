@@ -145,7 +145,7 @@ describe('listarParticipantes', () => {
       })
     )
     expect(resultado.items).toEqual([
-      { participantId: 'id-1', nombre: 'Ana Pérez', estadoPago: 'pendiente', tipoRegistro: 'online', checkIn: false }
+      { participantId: 'id-1', nombre: 'Ana Pérez', estadoPago: 'pendiente', fechaRegistro: '2026-09-01T00:00:00.000Z', tipoRegistro: 'online', checkIn: false }
     ])
     expect(resultado.pagination.total).toBe(1)
     expect(resultado.pagination.nextToken).toBeUndefined()
@@ -165,6 +165,7 @@ describe('listarParticipantes', () => {
         participantId: 'id-1',
         nombre: 'Ana Pérez',
         estadoPago: 'pendiente',
+        fechaRegistro: '2026-09-01T00:00:00.000Z',
         tipoRegistro: 'online',
         checkIn: false
       },
@@ -172,10 +173,22 @@ describe('listarParticipantes', () => {
         participantId: 'id-2',
         nombre: 'Leo García',
         estadoPago: 'pagado',
+        fechaRegistro: '2026-09-02T00:00:00.000Z',
         tipoRegistro: 'in_situ',
         equipoColor: 'rojo',
         checkIn: true
       }
+    ])
+  })
+
+  it('incluye fechaRegistro en cada ítem del listado', async () => {
+    sendMock.mockResolvedValueOnce({ Items: [ana, leo] })
+
+    const resultado = await listarParticipantes()
+
+    expect(resultado.items.map((item) => item.fechaRegistro)).toEqual([
+      '2026-09-01T00:00:00.000Z',
+      '2026-09-02T00:00:00.000Z'
     ])
   })
 
@@ -383,7 +396,7 @@ describe('listarIntegrantesDeEquipo', () => {
       })
     )
     expect(resultado).toEqual([
-      { participantId: 'id-1', nombre: 'Ana', estadoPago: 'pendiente', tipoRegistro: 'online', equipoColor: 'rojo', checkIn: false }
+      { participantId: 'id-1', nombre: 'Ana', estadoPago: 'pendiente', fechaRegistro: '2026-09-01T00:00:00.000Z', tipoRegistro: 'online', equipoColor: 'rojo', checkIn: false }
     ])
   })
 
