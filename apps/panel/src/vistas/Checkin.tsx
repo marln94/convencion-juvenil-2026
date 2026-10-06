@@ -1,5 +1,5 @@
 import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
-import type { Participante, ResumenParticipante } from '@convencion/shared-types'
+import type { EstadoPago, Participante, ResumenParticipante } from '@convencion/shared-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Alert, Button, Card, Container, Input, Pill, Section, VistaHeader } from '@convencion/ui/components/ui'
@@ -33,6 +33,16 @@ async function resolverParticipante(id: string): Promise<ResumenParticipante | u
   } catch {
     return undefined
   }
+}
+
+function avisoPago(estadoPago: EstadoPago): string | null {
+  if (estadoPago === 'pendiente') {
+    return 'Pago pendiente: se puede entregar banda pero el pago seguirá pendiente'
+  }
+  if (estadoPago === 'rechazado') {
+    return 'Pago rechazado: se puede entregar banda pero el pago seguirá rechazado'
+  }
+  return null
 }
 
 interface EscanerProps {
@@ -150,17 +160,17 @@ export function VistaCheckin() {
   const [resultados, setResultados] = useState<ResumenParticipante[]>([])
   const [participante, setParticipante] = useState<ResumenParticipante | undefined>(undefined)
   const [desconocido, setDesconocido] = useState(false)
-  const [procesando, setProcesando] = useState(false)
+  const [procesandoId, setProcesandoId] = useState<string | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [isResolving, setIsResolving] = useState(false)
   const [showHint, setShowHint] = useState(false)
 
   useEffect(() => {
-    if (modo === 'buscar') {
-      setParticipante(undefined)
-      setDesconocido(false)
-      setMensaje(null)
-    }
+    setParticipante(undefined)
+    setDesconocido(false)
+    setMensaje(null)
+    setErrorLocal(null)
   }, [modo])
 
   const procesar = useCallback(async (texto: string) => {
@@ -168,6 +178,7 @@ export function VistaCheckin() {
     setParticipante(undefined)
     setDesconocido(false)
     setMensaje(null)
+    setErrorLocal(null)
     if (!id) return
 
     const SHOW_LOADER_DELAY = 200
@@ -220,18 +231,35 @@ export function VistaCheckin() {
   }, [busqueda])
 
   const registrarLlegada = useCallback(async (resumen: ResumenParticipante) => {
-    setProcesando(true)
+    setProcesandoId(resumen.participantId)
     setMensaje(null)
+    setErrorLocal(null)
     try {
-      await encolarOperacion('checkin', { participantId: resumen.participantId })
-      await agregarAlIndice({ ...resumen, checkIn: true })
-      setParticipante({ ...resumen, checkIn: true })
+      try {
+        await encolarOperacion('checkin', { participantId: resumen.participantId })
+        await agregarAlIndice({ ...resumen, checkIn: true })
+      } catch {
+        setErrorLocal('No se pudo guardar la llegada. Intenta de nuevo.')
+        return
+      }
+      setResultados((prev) =>
+        prev.map((item) =>
+          item.participantId === resumen.participantId ? { ...item, checkIn: true } : item
+        )
+      )
+      setParticipante((prev) =>
+        prev?.participantId === resumen.participantId ? { ...prev, checkIn: true } : prev
+      )
       if (navigator.onLine) {
-        await sincronizar()
+        try {
+          await sincronizar()
+        } catch {
+          // silencioso: la operación queda en cola y el header ya muestra "N sin sincronizar"
+        }
       }
       setMensaje('Llegada registrada. ¡Bienvenido/a!')
     } finally {
-      setProcesando(false)
+      setProcesandoId(null)
     }
   }, [])
 
@@ -284,31 +312,51 @@ export function VistaCheckin() {
               <Button onClick={() => void buscar()}>Buscar</Button>
             </div>
           </div>
+          {errorLocal ? <Alert variant="error">{errorLocal}</Alert> : null}
           <ul className="flex flex-col gap-2">
-            {resultados.map((resultado) => (
-              <li key={resultado.participantId}>
-                <button
-                  type="button"
-                  onClick={() => setParticipante(resultado)}
-                  className="w-full text-left p-3"
+            {resultados.map((resultado) => {
+              const aviso = avisoPago(resultado.estadoPago)
+              return (
+                <li
+                  key={resultado.participantId}
+                  className="flex items-center gap-3 p-3"
                   style={{
                     border: '2px solid var(--color-border)',
                     borderRadius: 'var(--radius)',
                     background: 'var(--color-paper-light)',
                   }}
                 >
-                  <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>{resultado.nombre}</span>
-                  <span className="mt-1 flex gap-2">
-                    <Pill variant={resultado.estadoPago === 'pagado' ? 'green' : resultado.estadoPago === 'pendiente' ? 'amber' : 'red'}>
-                      {resultado.estadoPago === 'pagado' ? 'Pagado' : resultado.estadoPago === 'pendiente' ? 'Pendiente' : 'Rechazado'}
-                    </Pill>
-                    <Pill variant={resultado.checkIn ? 'green' : 'default'}>
-                      {resultado.checkIn ? 'Llegó' : 'No llegó'}
-                    </Pill>
-                  </span>
-                </button>
-              </li>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>
+                      {resultado.nombre}
+                    </span>
+                    <span className="mt-1 flex flex-wrap gap-2">
+                      <Pill variant={resultado.estadoPago === 'pagado' ? 'green' : resultado.estadoPago === 'pendiente' ? 'amber' : 'red'}>
+                        {resultado.estadoPago === 'pagado' ? 'Pagado' : resultado.estadoPago === 'pendiente' ? 'Pendiente' : 'Rechazado'}
+                      </Pill>
+                      <Pill variant={resultado.checkIn ? 'green' : 'default'}>
+                        {resultado.checkIn ? 'Llegó' : 'No llegó'}
+                      </Pill>
+                    </span>
+                    {aviso ? (
+                      <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-soft)' }}>
+                        {aviso}
+                      </p>
+                    ) : null}
+                  </div>
+                  {!resultado.checkIn ? (
+                    <Button
+                      variant="primary"
+                      className="min-h-11 shrink-0"
+                      disabled={procesandoId !== null}
+                      onClick={() => void registrarLlegada(resultado)}
+                    >
+                      {procesandoId === resultado.participantId ? 'Registrando…' : 'Registrar'}
+                    </Button>
+                  ) : null}
+                </li>
+              )
+            })}
             {busqueda.trim() && resultados.length === 0 && (
               <li>
                 <Alert variant="info">Sin coincidencias en los datos locales</Alert>
@@ -325,7 +373,7 @@ export function VistaCheckin() {
         </Alert>
       ) : null}
 
-      {participante ? (
+      {modo === 'escanear' && participante ? (
         <Card className="print-area">
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -341,11 +389,9 @@ export function VistaCheckin() {
               </Pill>
             </div>
           </div>
-          {participante.estadoPago !== 'pagado' ? (
+          {avisoPago(participante.estadoPago) ? (
             <p className="mt-3 text-sm" style={{ background: 'var(--color-paper-light)', padding: '0.5rem', border: '2px solid var(--color-border)', borderRadius: 'var(--radius)', color: 'var(--color-text)' }}>
-              {participante.estadoPago === 'pendiente'
-                ? 'Pago pendiente: se entrega banda sin bloquear.'
-                : 'Pago rechazado: se entrega banda sin bloquear.'}
+              {avisoPago(participante.estadoPago)}
             </p>
           ) : null}
           {!participante.checkIn ? (
@@ -354,9 +400,9 @@ export function VistaCheckin() {
               variant="primary"
               className="mt-3 min-h-14 text-base"
               onClick={() => void registrarLlegada(participante)}
-              disabled={procesando}
+              disabled={procesandoId !== null}
             >
-              {procesando ? 'Registrando…' : 'Registrar llegada'}
+              {procesandoId === participante.participantId ? 'Registrando…' : 'Registrar llegada'}
             </Button>
           ) : (
             <p className="mt-3 text-center text-sm font-medium" style={{ color: '#10B981' }}>
@@ -366,7 +412,9 @@ export function VistaCheckin() {
         </Card>
       ) : null}
 
-      {mensaje ? <Alert variant="success">{mensaje}</Alert> : null}
+      {modo === 'escanear' && errorLocal ? <Alert variant="error">{errorLocal}</Alert> : null}
+
+      {modo === 'escanear' && mensaje ? <Alert variant="success">{mensaje}</Alert> : null}
       </Section>
     </Container>
   )

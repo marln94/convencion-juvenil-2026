@@ -1,34 +1,6 @@
-# Check-in
+# Spec Delta
 
-## Purpose
-
-Registra la llegada de los asistentes al evento mediante código QR o búsqueda por nombre, y
-muestra su estado de pago vigente al momento de la entrada, permitiendo siempre el acceso.
-
-## Requirements
-
-### Requirement: Registro de llegada por QR
-
-El sistema SHALL permitir registrar la llegada de un asistente escaneando su código QR (que
-codifica el `participantId`), SHALL mostrar el nombre y el estado de pago del participante y SHALL
-marcar la llegada con su timestamp.
-
-#### Scenario: Escaneo exitoso
-
-- **WHEN** se escanea un QR cuyo `participantId` existe
-- **THEN** el sistema muestra al participante con su nombre y estado de pago y, al confirmar el
-  registro, marca `checkIn = true` con su timestamp
-
-#### Scenario: QR con código desconocido
-
-- **WHEN** se escanea un QR cuyo `participantId` no existe
-- **THEN** el sistema indica que el código no corresponde a un participante y no registra la
-  llegada
-
-#### Scenario: Llegada repetida
-
-- **WHEN** un asistente ya registrado llega de nuevo
-- **THEN** el sistema conserva la llegada original y la consulta muestra que ya llegó
+## MODIFIED Requirements
 
 ### Requirement: Registro de llegada por búsqueda de nombre
 
@@ -78,6 +50,8 @@ el pago pendiente o rechazado.
   de la búsqueda por nombre como en el resultado del escaneo QR
 - **THEN** el sistema muestra un aviso de que la banda se puede entregar y de que el pago
   seguirá pendiente o rechazado, según el caso
+
+## ADDED Requirements
 
 ### Requirement: Reporte del resultado del registro de llegada
 
