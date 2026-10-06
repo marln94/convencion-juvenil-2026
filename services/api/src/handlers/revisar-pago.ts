@@ -37,6 +37,7 @@ app.get('/pagos/:estado', async (c) => {
       nombre: participante.nombre,
       correo: participante.correo,
       estadoPago: participante.estadoPago,
+      motivoRechazo: participante.motivoRechazo,
       tieneComprobante: Boolean(participante.comprobanteS3Key),
       vistaComprobanteUrl: participante.comprobanteS3Key
         ? await firmarLecturaComprobante(participante.comprobanteS3Key)

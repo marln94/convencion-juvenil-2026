@@ -79,6 +79,7 @@ export interface BandejaPagosItem {
   nombre: string
   correo?: string
   estadoPago: EstadoPago
+  motivoRechazo?: string
   tieneComprobante: boolean
   vistaComprobanteUrl?: string
   fechaRegistro: string

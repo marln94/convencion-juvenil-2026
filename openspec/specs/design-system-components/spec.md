@@ -7,7 +7,7 @@ Provides the redesigned primitive UI components (Button, Input, Select, Card, Al
 
 ### Requirement: Button component (Button)
 
-The system SHALL provide a Button component with sharp corners (--radius: 0), uppercase text, bold weight, 2px borders, and two variants.
+The system SHALL provide a Button component with sharp corners (--radius: 0), uppercase text, bold weight, 2px borders, and three variants.
 
 #### Scenario: Primary button renders
 - **WHEN** <Button variant="primary" /> renders
@@ -16,6 +16,14 @@ The system SHALL provide a Button component with sharp corners (--radius: 0), up
 #### Scenario: Outline button renders
 - **WHEN** <Button variant="outline" /> renders
 - **THEN** it has transparent background, var(--color-ink) text, 2px solid var(--color-ink) border, hover background var(--color-ink) with var(--color-paper) text
+
+#### Scenario: Ghost button renders
+- **WHEN** <Button variant="ghost" /> renders
+- **THEN** it has transparent background, var(--color-ink) text, transparent border, hover background var(--color-paper), and it uses no red so it reads as a neutral action beside primary and outline buttons
+
+#### Scenario: Disabled button state
+- **WHEN** a button renders with the disabled attribute
+- **THEN** it shows opacity 0.5, a not-allowed cursor, no hover transform, and it is not operable by pointer or keyboard
 
 #### Scenario: Button uses design typography
 - **WHEN** any button renders

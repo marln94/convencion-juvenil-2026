@@ -59,6 +59,14 @@ const sinComprobante: Participante = {
   fechaRegistro: '2026-09-02T00:00:00.000Z'
 }
 
+const rechazadoConMotivo: Participante = {
+  ...conComprobante,
+  participantId: 'id-3',
+  nombre: 'Rosa López',
+  estadoPago: 'rechazado',
+  motivoRechazo: 'Comprobante ilegible'
+}
+
 function cuerpoRevisar(parcial: Record<string, unknown>): RequestInit {
   return {
     method: 'POST',
@@ -76,15 +84,17 @@ beforeEach(() => {
 
 describe('GET /pagos/:estado', () => {
   it('devuelve la bandeja de pendientes con URL firmada solo cuando hay comprobante', async () => {
-    listarPorEstadoPagoMock.mockResolvedValueOnce([conComprobante, sinComprobante])
+    listarPorEstadoPagoMock.mockResolvedValueOnce([conComprobante, sinComprobante, rechazadoConMotivo])
 
     const res = await app.request('/pagos/pendiente', { method: 'GET' })
 
     expect(res.status).toBe(200)
     expect(listarPorEstadoPagoMock).toHaveBeenCalledWith('pendiente')
     expect(firmarLecturaMock).toHaveBeenCalledWith('comprobantes/a.png')
-    const body = (await res.json()) as { items: { tieneComprobante: boolean; vistaComprobanteUrl?: string }[] }
-    expect(body.items).toHaveLength(2)
+    const body = (await res.json()) as {
+      items: { tieneComprobante: boolean; vistaComprobanteUrl?: string; motivoRechazo?: string }[]
+    }
+    expect(body.items).toHaveLength(3)
     expect(body.items[0]).toMatchObject({
       participantId: 'id-1',
       nombre: 'Ana Pérez',
@@ -92,11 +102,18 @@ describe('GET /pagos/:estado', () => {
       tieneComprobante: true,
       vistaComprobanteUrl: 'https://s3.example.test/comprobantes/a.png?X-Amz-Signature=abc'
     })
+    expect(body.items[0]).not.toHaveProperty('motivoRechazo')
     expect(body.items[1]).toMatchObject({
       participantId: 'id-2',
       tieneComprobante: false
     })
     expect(body.items[1]).not.toHaveProperty('vistaComprobanteUrl')
+    expect(body.items[1]).not.toHaveProperty('motivoRechazo')
+    expect(body.items[2]).toMatchObject({
+      participantId: 'id-3',
+      estadoPago: 'rechazado',
+      motivoRechazo: 'Comprobante ilegible'
+    })
   })
 
   it('filtra por otro estado (pagado)', async () => {

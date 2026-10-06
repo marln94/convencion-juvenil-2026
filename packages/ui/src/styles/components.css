@@ -44,7 +44,7 @@
     color: var(--color-white);
   }
 
-  .btn--primary:hover {
+  .btn--primary:not(:disabled):hover {
     background: var(--color-red-dark);
     transform: translateY(-2px);
   }
@@ -55,9 +55,19 @@
     border-color: var(--color-ink);
   }
 
-  .btn--outline:hover {
+  .btn--outline:not(:disabled):hover {
     background: var(--color-ink);
     color: var(--color-paper);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: transparent;
+  }
+
+  .btn--ghost:not(:disabled):hover {
+    background: var(--color-paper);
   }
 
   .btn:focus-visible {
