@@ -60,9 +60,6 @@ interface DatosFormulario {
   edad: string
   diasAsistencia: string[]
   rol: Rol
-  esRegistroPorEncargado: boolean
-  encargadoNombre: string
-  encargadoContacto: string
 }
 
 const INICIO: DatosFormulario = {
@@ -74,9 +71,6 @@ const INICIO: DatosFormulario = {
   edad: '',
   diasAsistencia: [],
   rol: 'joven',
-  esRegistroPorEncargado: false,
-  encargadoNombre: '',
-  encargadoContacto: '',
 }
 
 function validar(datos: DatosFormulario): string | null {
@@ -94,15 +88,6 @@ function validar(datos: DatosFormulario): string | null {
   if (!datos.diasAsistencia.every((d) => DIAS_ASISTENCIA_OPTIONS.some((dia) => dia.value === d))) return 'Día de asistencia inválido'
   if (!datos.rol) return 'Seleccioná un rol válido'
   if (!ROLES.some(([r]) => r === datos.rol)) return 'Seleccioná un rol válido'
-  if (
-    datos.esRegistroPorEncargado &&
-    (!datos.encargadoNombre.trim() || !datos.encargadoContacto.trim())
-  ) {
-    return 'Los datos del encargado son obligatorios'
-  }
-  if (datos.encargadoNombre.trim() && contieneNumeros(datos.encargadoNombre)) {
-    return 'El nombre del encargado no puede contener números'
-  }
   return null
 }
 
@@ -138,9 +123,6 @@ export function VistaRegistroInsitu() {
         edad: parseInt(datos.edad, 10),
         diasAsistencia: datos.diasAsistencia,
         rol: datos.rol,
-        esRegistroPorEncargado: datos.esRegistroPorEncargado,
-        encargadoNombre: datos.encargadoNombre.trim() || undefined,
-        encargadoContacto: datos.encargadoContacto.trim() || undefined,
         tipoRegistro: 'in_situ' as const,
         equipoColor,
       }
@@ -168,9 +150,7 @@ export function VistaRegistroInsitu() {
         edad: payload.edad,
         diasAsistencia: payload.diasAsistencia,
         rol: payload.rol,
-        esRegistroPorEncargado: payload.esRegistroPorEncargado,
-        encargadoNombre: payload.encargadoNombre,
-        encargadoContacto: payload.encargadoContacto,
+        esRegistroPorEncargado: false,
         tipoRegistro: 'in_situ',
         estadoPago: 'pagado',
         checkIn: true,
@@ -267,23 +247,6 @@ export function VistaRegistroInsitu() {
             onChange={(val) => actualizar('diasAsistencia', val)}
             required
           />
-
-          <label className="flex items-center gap-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.875rem', letterSpacing: '0.03em', color: 'var(--color-text)' }}>
-            <input
-              type="checkbox"
-              checked={datos.esRegistroPorEncargado}
-              onChange={(e) => actualizar('esRegistroPorEncargado', e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--color-accent)', border: '2px solid var(--color-ink)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
-            />
-            Registro por encargado
-          </label>
-
-          {datos.esRegistroPorEncargado ? (
-            <Card className="p-3" style={{ background: 'var(--color-paper-light)', border: '2px solid var(--color-ink)' }}>
-              <Input label="Nombre del encargado" value={datos.encargadoNombre} onChange={(v) => actualizar('encargadoNombre', v)} />
-              <Input label="Contacto del encargado" value={datos.encargadoContacto} onChange={(v) => actualizar('encargadoContacto', v)} />
-            </Card>
-          ) : null}
 
           {error && <Alert variant="error">{error}</Alert>}
 
