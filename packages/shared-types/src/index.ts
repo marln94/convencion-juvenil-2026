@@ -1,4 +1,5 @@
 export * from './edad.js'
+export * from './equipos.js'
 export * from './participante.js'
 export * from './configuracion.js'
 export * from './dtos.js'

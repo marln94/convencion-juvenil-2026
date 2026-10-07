@@ -1,12 +1,13 @@
 import type {
-  BloquearEquiposOutput,
+  AsignarEquipoInput,
+  AsignarEquipoOutput,
   CheckInInput,
   CheckInOutput,
   ConfiguracionEquipos,
   ConfiguracionEquiposInput,
+  ConteosEquiposOutput,
   EquiposAsignacionOutput,
   EstadoPago,
-  GenerarEquiposOutput,
   ListarBandejaPagosOutput,
   ListarIntegrantesEquipoOutput,
   ListarParticipantesInput,
@@ -32,8 +33,8 @@ export interface ApiClient {
   ): Promise<SolicitarComprobanteUploadOutput>
   revisarPago(input: RevisarPagoInput): Promise<RevisarPagoOutput>
   listarBandejaPagos(estado: EstadoPago): Promise<ListarBandejaPagosOutput>
-  generarEquipos(): Promise<GenerarEquiposOutput>
-  bloquearEquipos(): Promise<BloquearEquiposOutput>
+  asignarEquipo(input: AsignarEquipoInput): Promise<AsignarEquipoOutput>
+  obtenerConteos(): Promise<ConteosEquiposOutput>
   configEquipos(input: ConfiguracionEquiposInput): Promise<ConfiguracionEquipos>
   obtenerEquipos(): Promise<EquiposAsignacionOutput>
   listarIntegrantesDeEquipo(color: string): Promise<ListarIntegrantesEquipoOutput>
@@ -81,10 +82,14 @@ export function createApiClient(baseUrl: string, opciones: OpcionesCliente = {})
       ),
     listarBandejaPagos: (estado) =>
       request(baseUrl, ENDPOINTS.listarBandejaPagos(estado), undefined, opciones),
-    generarEquipos: () =>
-      request(baseUrl, ENDPOINTS.generarEquipos, { method: 'POST' }, opciones),
-    bloquearEquipos: () =>
-      request(baseUrl, ENDPOINTS.bloquearEquipos, { method: 'POST' }, opciones),
+    asignarEquipo: (input) =>
+      request(
+        baseUrl,
+        ENDPOINTS.asignarEquipo,
+        { method: 'POST', body: JSON.stringify(input) },
+        opciones
+      ),
+    obtenerConteos: () => request(baseUrl, ENDPOINTS.obtenerConteos, undefined, opciones),
     configEquipos: (input) =>
       request(
         baseUrl,

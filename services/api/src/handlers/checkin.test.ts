@@ -4,14 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 process.env.AUTH_BYPASS_DEV = 'true'
 process.env.AUTH_BYPASS_ROL = 'admin'
 
-const { obtenerParticipanteMock, marcarCheckInMock } = vi.hoisted(() => ({
-  obtenerParticipanteMock: vi.fn(),
-  marcarCheckInMock: vi.fn()
-}))
+const { obtenerParticipanteMock, marcarCheckInMock, obtenerConfiguracionEquiposMock } =
+  vi.hoisted(() => ({
+    obtenerParticipanteMock: vi.fn(),
+    marcarCheckInMock: vi.fn(),
+    obtenerConfiguracionEquiposMock: vi.fn()
+  }))
 
 vi.mock('../repos/participantes.js', () => ({
   obtenerParticipante: obtenerParticipanteMock,
   marcarCheckIn: marcarCheckInMock
+}))
+
+vi.mock('../repos/configuracion.js', () => ({
+  obtenerConfiguracionEquipos: obtenerConfiguracionEquiposMock
 }))
 
 import { Hono } from 'hono'
@@ -49,6 +55,8 @@ function hacerPost(cuerpo: unknown): Response | Promise<Response> {
 beforeEach(() => {
   obtenerParticipanteMock.mockReset()
   marcarCheckInMock.mockReset()
+  obtenerConfiguracionEquiposMock.mockReset()
+  obtenerConfiguracionEquiposMock.mockResolvedValue(undefined)
 })
 
 describe('POST /checkin', () => {
@@ -60,7 +68,7 @@ describe('POST /checkin', () => {
 
     expect(res.status).toBe(200)
     expect(obtenerParticipanteMock).toHaveBeenCalledWith('id-1')
-    expect(marcarCheckInMock).toHaveBeenCalledWith('id-1')
+    expect(marcarCheckInMock).toHaveBeenCalledWith('id-1', undefined)
     const body = (await res.json()) as { participante: Participante }
     expect(body.participante.checkIn).toBe(true)
     expect(body.participante.checkInTimestamp).toBe('2026-09-10T10:00:00.000Z')
@@ -99,5 +107,42 @@ describe('POST /checkin', () => {
 
     expect(res.status).toBe(400)
     expect(obtenerParticipanteMock).not.toHaveBeenCalled()
+  })
+
+  it('asigna el equipo en la llegada y lo devuelve en la respuesta', async () => {
+    obtenerParticipanteMock.mockResolvedValue(participanteBase)
+    marcarCheckInMock.mockResolvedValue('2026-09-10T10:15:00.000Z')
+
+    const res = await hacerPost({ participantId: 'id-1', equipoColor: 'Daniel' })
+
+    expect(res.status).toBe(200)
+    expect(marcarCheckInMock).toHaveBeenCalledWith('id-1', 'Daniel')
+    const body = (await res.json()) as { participante: Participante }
+    expect(body.participante.equipoColor).toBe('Daniel')
+  })
+
+  it('rechaza 400 si el equipo no está en la lista activa', async () => {
+    obtenerParticipanteMock.mockResolvedValue(participanteBase)
+    obtenerConfiguracionEquiposMock.mockResolvedValue({
+      configId: 'equipos',
+      colores: ['Daniel']
+    })
+
+    const res = await hacerPost({ participantId: 'id-1', equipoColor: 'Azul' })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'El equipo seleccionado no existe' })
+    expect(marcarCheckInMock).not.toHaveBeenCalled()
+  })
+
+  it('conserva el equipo ya asignado en un re-escaneo sin equipo', async () => {
+    obtenerParticipanteMock.mockResolvedValue({ ...participanteBase, equipoColor: 'Rut' })
+    marcarCheckInMock.mockResolvedValue('2026-09-10T18:00:00.000Z')
+
+    const res = await hacerPost({ participantId: 'id-1' })
+
+    const body = (await res.json()) as { participante: Participante }
+    expect(body.participante.equipoColor).toBe('Rut')
+    expect(marcarCheckInMock).toHaveBeenCalledWith('id-1', undefined)
   })
 })

@@ -77,7 +77,8 @@ export const registrarParticipanteSchema = z
     encargadoNombre: z.string().optional(),
     encargadoContacto: z.string().optional(),
     tipoRegistro: z.enum(TIPOS_REGISTRO, { message: 'El tipo de registro es inválido' }),
-    comprobante: comprobanteSchema.optional()
+    comprobante: comprobanteSchema.optional(),
+    equipoColor: z.string().trim().min(1).optional()
   })
   .superRefine((datos, ctx) => {
     // El limite de `joven` depende del rol, asi que no puede vivir solo en el
@@ -131,6 +132,13 @@ export const registrarParticipanteSchema = z
         message: 'El comprobante de pago es obligatorio'
       })
     }
+    if (datos.tipoRegistro === 'in_situ' && !datos.equipoColor) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['equipoColor'],
+        message: 'El equipo es obligatorio para el registro in situ'
+      })
+    }
   })
 
 export const solicitarComprobanteUploadSchema = z.object({
@@ -164,10 +172,18 @@ export const coloresEquiposSchema = z.object({
 export type ColoresEquiposValido = z.infer<typeof coloresEquiposSchema>
 
 export const checkInSchema = z.object({
-  participantId: z.string().trim().min(1, { message: 'El participantId es obligatorio' })
+  participantId: z.string().trim().min(1, { message: 'El participantId es obligatorio' }),
+  equipoColor: z.string().trim().min(1).optional()
 })
 
 export type CheckInValido = z.infer<typeof checkInSchema>
+
+export const asignarEquipoSchema = z.object({
+  participantId: z.string().trim().min(1, { message: 'El participantId es obligatorio' }),
+  equipoColor: z.string().trim().min(1, { message: 'El equipo es obligatorio' })
+})
+
+export type AsignarEquipoValido = z.infer<typeof asignarEquipoSchema>
 
 export function primerErrorLegible(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'Solicitud inválida'

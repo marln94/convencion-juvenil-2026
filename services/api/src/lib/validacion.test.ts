@@ -191,7 +191,22 @@ describe('registrarParticipanteSchema', () => {
     expect(resultado.success).toBe(true)
   })
 
-  it('acepta registro in situ sin comprobante', () => {
+  it('acepta registro in situ sin comprobante con equipo', () => {
+    const resultado = registrarParticipanteSchema.safeParse({
+      nombre: 'Leo García',
+      contacto: 'leo@example.com',
+      tipoRegistro: 'in_situ',
+      equipoColor: 'David',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
+    })
+    expect(resultado.success).toBe(true)
+  })
+
+  it('rechaza registro in situ sin equipo', () => {
     const resultado = registrarParticipanteSchema.safeParse({
       nombre: 'Leo García',
       contacto: 'leo@example.com',
@@ -202,7 +217,10 @@ describe('registrarParticipanteSchema', () => {
       diasAsistencia: ['jueves-24'],
       rol: 'joven'
     })
-    expect(resultado.success).toBe(true)
+    expect(resultado.success).toBe(false)
+    expect(resultado.error?.issues[0]?.message).toBe(
+      'El equipo es obligatorio para el registro in situ'
+    )
   })
 
   it('acepta joven en el borde inferior de la banda', () => {

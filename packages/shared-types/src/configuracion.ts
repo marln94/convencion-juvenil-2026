@@ -2,7 +2,6 @@ export type ConfiguracionId = 'equipos'
 
 export interface ConfiguracionEquipos {
   configId: ConfiguracionId
-  bloqueado: boolean
-  fechaGeneracion?: string
+  /** Equipos activos (nombres). Vacío = usar la lista por defecto del código. */
   colores: string[]
 }

@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card, Container, Input, Pill, Section, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
+import { decidirEquipoParaLlegada } from '../lib/equipos'
+import { EquipoChip } from '../lib/equipo-chip'
 import { agregarAlIndice, buscarEnIndice, obtenerDelIndice } from '../lib/indice'
 import { sincronizar } from '../lib/sincronizacion'
 
@@ -165,12 +167,14 @@ export function VistaCheckin() {
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const [isResolving, setIsResolving] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [confirmacion, setConfirmacion] = useState<{ resumen: ResumenParticipante; equipo: string } | null>(null)
 
   useEffect(() => {
     setParticipante(undefined)
     setDesconocido(false)
     setMensaje(null)
     setErrorLocal(null)
+    setConfirmacion(null)
   }, [modo])
 
   const procesar = useCallback(async (texto: string) => {
@@ -179,6 +183,7 @@ export function VistaCheckin() {
     setDesconocido(false)
     setMensaje(null)
     setErrorLocal(null)
+    setConfirmacion(null)
     if (!id) return
 
     const SHOW_LOADER_DELAY = 200
@@ -230,25 +235,37 @@ export function VistaCheckin() {
     setResultados(coincidencias.slice(0, 20))
   }, [busqueda])
 
-  const registrarLlegada = useCallback(async (resumen: ResumenParticipante) => {
+  const registrarLlegada = useCallback(async (resumen: ResumenParticipante, equipoColor?: string) => {
     setProcesandoId(resumen.participantId)
     setMensaje(null)
     setErrorLocal(null)
+    setConfirmacion(null)
     try {
       try {
-        await encolarOperacion('checkin', { participantId: resumen.participantId })
-        await agregarAlIndice({ ...resumen, checkIn: true })
+        await encolarOperacion('checkin', {
+          participantId: resumen.participantId,
+          ...(equipoColor ? { equipoColor } : {})
+        })
+        await agregarAlIndice({
+          ...resumen,
+          checkIn: true,
+          equipoColor: equipoColor ?? resumen.equipoColor
+        })
       } catch {
         setErrorLocal('No se pudo guardar la llegada. Intenta de nuevo.')
         return
       }
       setResultados((prev) =>
         prev.map((item) =>
-          item.participantId === resumen.participantId ? { ...item, checkIn: true } : item
+          item.participantId === resumen.participantId
+            ? { ...item, checkIn: true, equipoColor: equipoColor ?? item.equipoColor }
+            : item
         )
       )
       setParticipante((prev) =>
-        prev?.participantId === resumen.participantId ? { ...prev, checkIn: true } : prev
+        prev?.participantId === resumen.participantId
+          ? { ...prev, checkIn: true, equipoColor: equipoColor ?? prev.equipoColor }
+          : prev
       )
       if (navigator.onLine) {
         try {
@@ -257,11 +274,33 @@ export function VistaCheckin() {
           // silencioso: la operación queda en cola y el header ya muestra "N sin sincronizar"
         }
       }
-      setMensaje('Llegada registrada. ¡Bienvenido/a!')
+      setMensaje(
+        equipoColor
+          ? `Llegada registrada. Asignado al equipo ${equipoColor}.`
+          : 'Llegada registrada. Sin equipo asignado.'
+      )
     } finally {
       setProcesandoId(null)
     }
   }, [])
+
+  const manejarLlegada = useCallback(
+    async (resumen: ResumenParticipante) => {
+      const equipo = await decidirEquipoParaLlegada(resumen.equipoColor)
+      if (!equipo) {
+        await registrarLlegada(resumen)
+        return
+      }
+      // Pago pendiente o rechazado: el staff confirma que la banda se entrega y
+      // el participante ocupa el equipo; si omite, se registra sin equipo.
+      if (resumen.estadoPago !== 'pagado') {
+        setConfirmacion({ resumen, equipo })
+        return
+      }
+      await registrarLlegada(resumen, equipo)
+    },
+    [registrarLlegada]
+  )
 
   return (
     <Container className="max-w-md">
@@ -306,7 +345,47 @@ export function VistaCheckin() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') void buscar()
                 }}
-              />
+/>
+
+      {confirmacion ? (
+        <Card className="print-area mb-4">
+          <p className="font-semibold" style={{ color: 'var(--color-text)' }}>
+            Pago {confirmacion.resumen.estadoPago === 'pendiente' ? 'pendiente' : 'rechazado'} de{' '}
+            {confirmacion.resumen.nombre}
+          </p>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-ink-soft)' }}>
+            Se entregará la banda y se asignará el equipo <EquipoChip nombre={confirmacion.equipo} />{' '}
+            aunque el pago no esté aprobado.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              disabled={procesandoId !== null}
+              onClick={() =>
+                void registrarLlegada(confirmacion.resumen, confirmacion.equipo)
+              }
+            >
+              {procesandoId === confirmacion.resumen.participantId
+                ? 'Registrando…'
+                : 'Asignar y registrar'}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={procesandoId !== null}
+              onClick={() => void registrarLlegada(confirmacion.resumen)}
+            >
+              Registrar sin equipo
+            </Button>
+            <Button
+              variant="outline"
+              disabled={procesandoId !== null}
+              onClick={() => setConfirmacion(null)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </Card>
+      ) : null}
             </div>
             <div className="flex items-end">
               <Button onClick={() => void buscar()}>Buscar</Button>
@@ -337,6 +416,7 @@ export function VistaCheckin() {
                       <Pill variant={resultado.checkIn ? 'green' : 'default'}>
                         {resultado.checkIn ? 'Llegó' : 'No llegó'}
                       </Pill>
+                      <EquipoChip nombre={resultado.equipoColor} />
                     </span>
                     {aviso ? (
                       <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-soft)' }}>
@@ -349,7 +429,7 @@ export function VistaCheckin() {
                       variant="primary"
                       className="min-h-11 shrink-0"
                       disabled={procesandoId !== null}
-                      onClick={() => void registrarLlegada(resultado)}
+                      onClick={() => void manejarLlegada(resultado)}
                     >
                       {procesandoId === resultado.participantId ? 'Registrando…' : 'Registrar'}
                     </Button>
@@ -387,6 +467,7 @@ export function VistaCheckin() {
               <Pill variant={participante.checkIn ? 'green' : 'default'}>
                 {participante.checkIn ? 'Llegó' : 'No llegó'}
               </Pill>
+              <EquipoChip nombre={participante.equipoColor} />
             </div>
           </div>
           {avisoPago(participante.estadoPago) ? (
@@ -399,7 +480,7 @@ export function VistaCheckin() {
               fullWidth
               variant="primary"
               className="mt-3 min-h-14 text-base"
-              onClick={() => void registrarLlegada(participante)}
+              onClick={() => void manejarLlegada(participante)}
               disabled={procesandoId !== null}
             >
               {procesandoId === participante.participantId ? 'Registrando…' : 'Registrar llegada'}

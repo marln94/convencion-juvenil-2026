@@ -9,7 +9,7 @@ vi.mock('../lib/dynamo.js', () => ({
   getDocumentClient: () => ({ send: sendMock })
 }))
 
-import { crearParticipante, listarParticipantes, obtenerParticipante, listarPorEstadoPago, actualizarEstadoPago, listarIntegrantesDeEquipo, asignarEquipoColor } from './participantes.js'
+import { marcarCheckIn, crearParticipante, listarParticipantes, obtenerParticipante, listarPorEstadoPago, actualizarEstadoPago, listarIntegrantesDeEquipo, contarPorEquipo, asignarEquipoColorManual } from './participantes.js'
 
 const participanteBase: Participante = {
   participantId: 'id-1',
@@ -413,68 +413,102 @@ describe('listarIntegrantesDeEquipo', () => {
   })
 })
 
-describe('asignarEquipoColor', () => {
-  const conEquipo = (id: string): { participante: typeof participanteBase; equipoColor: string } => ({
-    participante: { ...participanteBase, participantId: id },
-    equipoColor: 'rojo'
+describe('marcarCheckIn', () => {
+  beforeEach(() => {
+    sendMock.mockReset()
   })
+
+  it('marca la llegada sin equipo con if_not_exists en el timestamp', async () => {
+    sendMock.mockResolvedValueOnce({})
+
+    await marcarCheckIn('id-1')
+
+    const llamada = sendMock.mock.calls.find(([cmd]) => cmd.constructor.name === 'UpdateCommand')
+    const input = llamada![0].input as {
+      Key: Record<string, unknown>
+      UpdateExpression: string
+      ExpressionAttributeValues: Record<string, unknown>
+    }
+    expect(input.Key).toEqual({ participantId: 'id-1' })
+    expect(input.UpdateExpression).toBe(
+      'SET checkIn = :verdadero, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha)'
+    )
+    expect(input.ExpressionAttributeValues[':verdadero']).toBe(true)
+    expect(input.ExpressionAttributeValues).not.toHaveProperty(':color')
+  })
+
+  it('asigna el equipo con if_not_exists para no pisar un equipo ya asignado', async () => {
+    sendMock.mockResolvedValueOnce({})
+
+    await marcarCheckIn('id-1', 'Daniel')
+
+    const llamada = sendMock.mock.calls.find(([cmd]) => cmd.constructor.name === 'UpdateCommand')
+    const input = llamada![0].input as { UpdateExpression: string; ExpressionAttributeValues: Record<string, unknown> }
+    expect(input.UpdateExpression).toBe(
+      'SET checkIn = :verdadero, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha), equipoColor = if_not_exists(equipoColor, :color)'
+    )
+    expect(input.ExpressionAttributeValues[':color']).toBe('Daniel')
+  })
+})
+
+describe('contarPorEquipo', () => {
+  beforeEach(() => {
+    sendMock.mockReset()
+  })
+
+  it('cuenta por equipo sobre el GSI-Equipo usando COUNT', async () => {
+    sendMock.mockResolvedValueOnce({ Count: 3 }).mockResolvedValueOnce({ Count: 1 })
+
+    const conteos = await contarPorEquipo(['Daniel', 'Rut'])
+
+    expect(sendMock).toHaveBeenCalledTimes(2)
+    expect(conteos).toEqual({ Daniel: 3, Rut: 1 })
+    const llamadas = sendMock.mock.calls.map(
+      ([cmd]) => (cmd.input as { ExpressionAttributeValues: Record<string, unknown> }).ExpressionAttributeValues[':color']
+    )
+    expect(llamadas).toEqual(['Daniel', 'Rut'])
+  })
+
+  it('suma páginas cuando hay clave de continuación', async () => {
+    const claveInicio = { equipoColor: 'Daniel', nombre: 'Ana' }
+    sendMock
+      .mockResolvedValueOnce({ Count: 5, LastEvaluatedKey: claveInicio })
+      .mockResolvedValueOnce({ Count: 2 })
+      .mockResolvedValueOnce({ Count: 0 })
+
+    const conteos = await contarPorEquipo(['Daniel', 'Rut'])
+
+    expect(conteos['Daniel']).toBe(7)
+    expect(conteos['Rut']).toBe(0)
+  })
+})
+
+describe('asignarEquipoColorManual', () => {
+  const conEquipo = { ...participanteBase, equipoColor: 'Daniel', checkIn: true }
 
   beforeEach(() => {
     sendMock.mockReset()
   })
 
-  it('escribe en chunks de 25 ítems', async () => {
-    const asignaciones = Array.from({ length: 30 }, (_, i) => conEquipo(`id-${i}`))
-    sendMock.mockResolvedValue({})
-
-    await asignarEquipoColor(asignaciones)
-
-    const llamadasBatch = sendMock.mock.calls.filter(
-      ([cmd]) => cmd.constructor.name === 'BatchWriteCommand'
-    )
-    expect(llamadasBatch).toHaveLength(2)
-    const primera = llamadasBatch[0]![0].input as { RequestItems: Record<string, unknown[]> }
-    const segunda = llamadasBatch[1]![0].input as { RequestItems: Record<string, unknown[]> }
-    expect(primera.RequestItems['Convencion-Participantes']).toHaveLength(25)
-    expect(segunda.RequestItems['Convencion-Participantes']).toHaveLength(5)
-  })
-
-  it('escribe el equipoColor en cada ítem', async () => {
-    sendMock.mockResolvedValueOnce({})
-
-    await asignarEquipoColor([conEquipo('id-1')])
-
-    const llamada = sendMock.mock.calls.find(([cmd]) => cmd.constructor.name === 'BatchWriteCommand')
-    const input = llamada![0].input as { RequestItems: Record<string, { PutRequest: { Item: Record<string, unknown> } }[]> }
-    const item = input.RequestItems['Convencion-Participantes']![0]!.PutRequest.Item
-    expect(item.participantId).toBe('id-1')
-    expect(item.equipoColor).toBe('rojo')
-  })
-
-  it('reintenta los ítems no procesados', async () => {
-    const asignacion = conEquipo('id-1')
+  it('sobrescribe el equipo y devuelve el participante actualizado', async () => {
     sendMock
-      .mockResolvedValueOnce({
-        UnprocessedItems: {
-          'Convencion-Participantes': [{ PutRequest: { Item: asignacion.participante } }]
-        }
-      })
       .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ Item: conEquipo })
 
-    await asignarEquipoColor([asignacion])
+    const resultado = await asignarEquipoColorManual('id-1', 'Daniel')
 
-    expect(sendMock.mock.calls.filter(([cmd]) => cmd.constructor.name === 'BatchWriteCommand')).toHaveLength(2)
-  })
-
-  it('lanza 500 si quedan ítems sin procesar tras los reintentos', async () => {
-    const asignacion = conEquipo('id-1')
-    sendMock.mockResolvedValue({
-      UnprocessedItems: {
-        'Convencion-Participantes': [{ PutRequest: { Item: asignacion.participante } }]
-      }
-    })
-
-    await expect(asignarEquipoColor([asignacion])).rejects.toMatchObject({ status: 500 })
-    expect(sendMock.mock.calls.filter(([cmd]) => cmd.constructor.name === 'BatchWriteCommand')).toHaveLength(3)
+    expect(resultado).toEqual(conEquipo)
+    const llamadaUpdate = sendMock.mock.calls.find(([cmd]) => cmd.constructor.name === 'UpdateCommand')
+    const input = llamadaUpdate![0].input as {
+      Key: Record<string, unknown>
+      UpdateExpression: string
+      ExpressionAttributeValues: Record<string, unknown>
+    }
+    expect(input.Key.participantId).toBe('id-1')
+    expect(input.UpdateExpression).toBe(
+      'SET equipoColor = :color, fechaAsignacionEquipo = :fecha, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha)'
+    )
+    expect(input.ExpressionAttributeValues[':color']).toBe('Daniel')
+    expect(typeof input.ExpressionAttributeValues[':fecha']).toBe('string')
   })
 })

@@ -5,13 +5,18 @@ import type { RegistrarParticipanteInput } from '@convencion/shared-types'
 import { eliminarDelIndice } from './indice.js'
 import { obtenerBaseDatos } from './persistencia.js'
 
+export interface CheckInEnCola {
+  participantId: string
+  equipoColor?: string
+}
+
 export interface RegistroInsituEnCola extends RegistrarParticipanteInput {
   tipoRegistro: 'in_situ'
   participantId: string
 }
 
 export type OperacionCola =
-  | { id: string; tipo: 'checkin'; payload: { participantId: string }; creadoEn: string }
+  | { id: string; tipo: 'checkin'; payload: CheckInEnCola; creadoEn: string }
   | { id: string; tipo: 'registro_insitu'; payload: RegistroInsituEnCola; creadoEn: string }
 
 export type OperacionDescartada = OperacionCola & {
@@ -40,7 +45,7 @@ export function crearIdCola(): string {
 
 export async function encolarOperacion(
   tipo: 'checkin',
-  payload: { participantId: string }
+  payload: CheckInEnCola
 ): Promise<void>
 export async function encolarOperacion(
   tipo: 'registro_insitu',
@@ -48,7 +53,7 @@ export async function encolarOperacion(
 ): Promise<void>
 export async function encolarOperacion(
   tipo: 'checkin' | 'registro_insitu',
-  payload: { participantId: string } | RegistroInsituEnCola
+  payload: CheckInEnCola | RegistroInsituEnCola
 ): Promise<void> {
   const db = await obtenerBaseDatos()
   const creadoEn = new Date().toISOString()
@@ -57,7 +62,7 @@ export async function encolarOperacion(
       ? {
           id: crearIdCola(),
           tipo: 'checkin',
-          payload: payload as { participantId: string },
+          payload: payload as CheckInEnCola,
           creadoEn
         }
       : {
@@ -101,7 +106,7 @@ export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
   for (const operacion of pendientes) {
     try {
       if (operacion.tipo === 'checkin') {
-        await apiCliente.checkIn({ participantId: operacion.payload.participantId })
+        await apiCliente.checkIn(operacion.payload)
       } else {
         await apiCliente.registrarParticipante(operacion.payload)
       }

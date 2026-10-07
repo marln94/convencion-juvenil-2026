@@ -4,14 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 process.env.AUTH_BYPASS_DEV = 'true'
 process.env.AUTH_BYPASS_ROL = 'admin'
 
-const { crearParticipanteMock, firmarSubidaComprobanteMock } = vi.hoisted(() => ({
-  crearParticipanteMock: vi.fn(),
-  firmarSubidaComprobanteMock: vi.fn()
-}))
+const { crearParticipanteMock, firmarSubidaComprobanteMock, obtenerConfiguracionEquiposMock } =
+  vi.hoisted(() => ({
+    crearParticipanteMock: vi.fn(),
+    firmarSubidaComprobanteMock: vi.fn(),
+    obtenerConfiguracionEquiposMock: vi.fn()
+  }))
 
 vi.mock('../repos/participantes.js', () => ({
   crearParticipante: crearParticipanteMock,
   obtenerParticipante: vi.fn()
+}))
+
+vi.mock('../repos/configuracion.js', () => ({
+  obtenerConfiguracionEquipos: obtenerConfiguracionEquiposMock
 }))
 
 vi.mock('../lib/comprobante.js', async (importOriginal) => {
@@ -51,6 +57,8 @@ beforeEach(() => {
     s3Key: 'comprobantes/x.png',
     contentType: 'image/png'
   })
+  obtenerConfiguracionEquiposMock.mockReset()
+  obtenerConfiguracionEquiposMock.mockResolvedValue(undefined)
 })
 
 describe('POST /inscripciones (online)', () => {
@@ -80,11 +88,12 @@ describe('POST /inscripciones (online)', () => {
 })
 
 describe('POST /inscripciones (in situ)', () => {
-  it('registra in situ con estado pagado sin comprobante', async () => {
+  it('registra in situ con estado pagado, equipo asignado y checkIn', async () => {
     const res = await post('/inscripciones', {
       nombre: 'Leo García',
       contacto: 'leo@example.com',
       tipoRegistro: 'in_situ',
+      equipoColor: 'David',
       localidad: 'San Pedro Sula',
       region: '12',
       edad: 30,
@@ -96,7 +105,50 @@ describe('POST /inscripciones (in situ)', () => {
     expect(res.status).toBe(201)
     expect(body.participante.estadoPago).toBe('pagado')
     expect(body.participante.tipoRegistro).toBe('in_situ')
+    expect(body.participante.equipoColor).toBe('David')
+    expect(body.participante.checkIn).toBe(true)
+    expect(body.participante.checkInTimestamp).toBeDefined()
     expect(body.codigoQr).toBe(body.participante.participantId)
+    expect(crearParticipanteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ equipoColor: 'David', checkIn: true })
+    )
+  })
+
+  it('rechaza 400 si falta el equipo en el registro in situ', async () => {
+    const res = await post('/inscripciones', {
+      nombre: 'Leo García',
+      contacto: 'leo@example.com',
+      tipoRegistro: 'in_situ',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'El equipo es obligatorio para el registro in situ' })
+    expect(crearParticipanteMock).not.toHaveBeenCalled()
+  })
+
+  it('rechaza 400 si el equipo no está en la lista activa', async () => {
+    obtenerConfiguracionEquiposMock.mockResolvedValue({ configId: 'equipos', colores: ['David'] })
+
+    const res = await post('/inscripciones', {
+      nombre: 'Leo García',
+      contacto: 'leo@example.com',
+      tipoRegistro: 'in_situ',
+      equipoColor: 'Azul',
+      localidad: 'San Pedro Sula',
+      region: '12',
+      edad: 30,
+      diasAsistencia: ['jueves-24'],
+      rol: 'joven'
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'El equipo seleccionado no existe' })
+    expect(crearParticipanteMock).not.toHaveBeenCalled()
   })
 
   it('respeta el participantId provisto para el in situ offline', async () => {
@@ -106,6 +158,7 @@ describe('POST /inscripciones (in situ)', () => {
       nombre: 'Leo García',
       contacto: 'leo@example.com',
       tipoRegistro: 'in_situ',
+      equipoColor: 'Rut',
       localidad: 'San Pedro Sula',
       region: '12',
       edad: 30,
@@ -128,6 +181,7 @@ describe('POST /inscripciones (in situ)', () => {
       nombre: 'Leo García',
       contacto: 'leo@example.com',
       tipoRegistro: 'in_situ',
+      equipoColor: 'Rut',
       localidad: 'San Pedro Sula',
       region: '12',
       edad: 30,

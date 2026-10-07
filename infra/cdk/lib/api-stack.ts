@@ -109,8 +109,8 @@ export class ApiStack extends Stack {
 
     const equiposRuta = api.root.addResource('equipos')
     agregarMetodo(equiposRuta, 'GET', equipos, false)
-    agregarMetodo(equiposRuta.addResource('generar'), 'POST', equipos, false)
-    agregarMetodo(equiposRuta.addResource('bloquear'), 'POST', equipos, false)
+    agregarMetodo(equiposRuta.addResource('asignar'), 'POST', equipos, false)
+    agregarMetodo(equiposRuta.addResource('conteos'), 'GET', equipos, false)
     agregarMetodo(equiposRuta.addResource('config'), 'POST', equipos, false)
     agregarMetodo(equiposRuta.addResource('{color}'), 'GET', equipos, false)
 

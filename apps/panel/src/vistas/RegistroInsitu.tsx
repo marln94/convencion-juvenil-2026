@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
+import { decidirEquipoParaLlegada } from '../lib/equipos'
+import { EquipoChip } from '../lib/equipo-chip'
 import { agregarAlIndice } from '../lib/indice'
 import { sincronizar } from '../lib/sincronizacion'
 
@@ -125,6 +127,7 @@ export function VistaRegistroInsitu() {
     setProcesando(true)
     try {
       const participantId = crypto.randomUUID()
+      const equipoColor = await decidirEquipoParaLlegada()
       const payload = {
         participantId,
         nombre: datos.nombre.trim(),
@@ -139,6 +142,7 @@ export function VistaRegistroInsitu() {
         encargadoNombre: datos.encargadoNombre.trim() || undefined,
         encargadoContacto: datos.encargadoContacto.trim() || undefined,
         tipoRegistro: 'in_situ' as const,
+        equipoColor,
       }
       await encolarOperacion('registro_insitu', payload)
       await agregarAlIndice({
@@ -146,7 +150,8 @@ export function VistaRegistroInsitu() {
         nombre: payload.nombre,
         estadoPago: 'pagado',
         fechaRegistro: new Date().toISOString(),
-        checkIn: false,
+        equipoColor,
+        checkIn: true,
       })
       const sinConectar = !navigator.onLine
       if (!sinConectar) {
@@ -168,7 +173,8 @@ export function VistaRegistroInsitu() {
         encargadoContacto: payload.encargadoContacto,
         tipoRegistro: 'in_situ',
         estadoPago: 'pagado',
-        checkIn: false,
+        checkIn: true,
+        equipoColor,
         fechaRegistro: new Date().toISOString(),
       }
       setResultado({ participante, codigoQr: participantId })
@@ -185,7 +191,15 @@ export function VistaRegistroInsitu() {
         <Card className="flex flex-col items-center gap-4 print-area text-center">
           <div>
             <p className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>{resultado.participante.nombre}</p>
-            <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Registro confirmado · pago pagado</p>
+            <p className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Registro confirmado · pago pagado · llegó hoy</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm" style={{ color: 'var(--color-ink-soft)' }}>Equipo:</span>
+            <EquipoChip nombre={resultado.participante.equipoColor} size="md" />
+          </div>
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-ink-soft)' }}>
+            <span aria-hidden="true">●</span>
+            Banda del color {resultado.participante.equipoColor}. Gafete con código para el check-in.
           </div>
           <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius)', padding: '0.75rem' }}>
             <QRCodeSVG value={resultado.codigoQr} size={220} level="M" />

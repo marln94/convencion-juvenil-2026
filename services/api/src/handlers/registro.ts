@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto'
 
-import type { Participante, RegistrarParticipanteOutput, SolicitarComprobanteUploadOutput } from '@convencion/shared-types'
+import {
+  nombresEquipos,
+  type Participante,
+  type RegistrarParticipanteOutput,
+  type SolicitarComprobanteUploadOutput
+} from '@convencion/shared-types'
 import { Hono } from 'hono'
 import { handle } from 'hono/aws-lambda'
 import { ZodError } from 'zod'
@@ -14,6 +19,7 @@ import {
   registrarParticipanteSchema,
   solicitarComprobanteUploadSchema
 } from '../lib/validacion.js'
+import { obtenerConfiguracionEquipos } from '../repos/configuracion.js'
 import { crearParticipante } from '../repos/participantes.js'
 
 const app = new Hono()
@@ -40,6 +46,18 @@ app.post('/inscripciones', requireAuth({ permitirInscripcionOnline: true }), asy
 
   const participantId = datos.participantId ?? randomUUID()
   const esInSitu = datos.tipoRegistro === 'in_situ'
+  const fechaRegistro = new Date().toISOString()
+
+  if (datos.equipoColor) {
+    const configuracion = await obtenerConfiguracionEquipos()
+    const activos =
+      configuracion && configuracion.colores.length > 0
+        ? configuracion.colores
+        : nombresEquipos
+    if (!activos.includes(datos.equipoColor)) {
+      throw new HttpError(400, 'El equipo seleccionado no existe')
+    }
+  }
 
   const participante: Participante = {
     participantId,
@@ -57,8 +75,10 @@ app.post('/inscripciones', requireAuth({ permitirInscripcionOnline: true }), asy
     tipoRegistro: datos.tipoRegistro,
     estadoPago: esInSitu ? 'pagado' : 'pendiente',
     comprobanteS3Key: datos.comprobante?.s3Key,
-    checkIn: false,
-    fechaRegistro: new Date().toISOString()
+    equipoColor: datos.equipoColor,
+    checkIn: esInSitu,
+    checkInTimestamp: esInSitu ? fechaRegistro : undefined,
+    fechaRegistro
   }
 
   await crearParticipante(participante)

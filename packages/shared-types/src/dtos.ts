@@ -19,6 +19,7 @@ export interface RegistrarParticipanteInput {
     contentType: string
     s3Key: string
   }
+  equipoColor?: string
 }
 
 export interface RegistrarParticipanteOutput {
@@ -98,18 +99,22 @@ export interface RevisarPagoOutput {
 export interface EquiposAsignacionOutput {
   asignacion: Record<string, string>
   porColor: Record<string, string[]>
-  bloqueado: boolean
+  conteos: ConteosEquiposOutput
 }
 
-export interface GenerarEquiposOutput extends EquiposAsignacionOutput {}
+export type ConteosEquiposOutput = Record<string, number>
 
 export interface ConfiguracionEquiposInput {
   colores: string[]
 }
 
-export interface BloquearEquiposOutput {
-  bloqueado: boolean
-  fechaGeneracion?: string
+export interface AsignarEquipoInput {
+  participantId: string
+  equipoColor: string
+}
+
+export interface AsignarEquipoOutput {
+  participante: Participante
 }
 
 export interface ListarIntegrantesEquipoOutput {
@@ -119,6 +124,7 @@ export interface ListarIntegrantesEquipoOutput {
 
 export interface CheckInInput {
   participantId: string
+  equipoColor?: string
 }
 
 export interface CheckInOutput {

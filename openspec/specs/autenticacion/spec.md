@@ -43,7 +43,7 @@ acceden a todo lo que los `staff` pueden hacer más las operaciones de administr
 #### Scenario: Staff accede a operaciones de campo
 
 - **WHEN** un usuario del grupo `staff` autenticado llama a un endpoint de campo (check-in,
-  registro in situ, búsqueda)
+  registro in situ, búsqueda, conteos de equipos)
 - **THEN** el sistema permite la operación
 
 #### Scenario: Admin accede a operaciones de campo
@@ -54,24 +54,31 @@ acceden a todo lo que los `staff` pueden hacer más las operaciones de administr
 #### Scenario: Admin accede a operaciones de administración
 
 - **WHEN** un usuario del grupo `admin` llama a un endpoint de administración (revisar pagos,
-  generar equipos)
+  reasignar equipos, configurar equipos)
 - **THEN** el sistema permite la operación
 
-### Requirement: Restricción de endpoints de administración por rol
+### Requirement: Restricción de endpoints de administración según rol
 
 El sistema SHALL rechazar con 403 las solicitudes de usuarios `staff` a los endpoints de
-administración (revisar pagos, generar equipos, configurar equipos) dejando los endpoints de
-campo abiertos a ambos roles.
+administración (revisar pagos, reasignar equipos, configurar equipos) y SHALL permitir a ambos
+roles los endpoints de campo, incluidos el check-in, el registro in situ y la consulta de
+conteos de equipos.
 
 #### Scenario: Staff intenta revisar un pago
 
 - **WHEN** un usuario del grupo `staff` llama al endpoint de revisión de pagos
 - **THEN** el sistema responde 403 con un mensaje de permiso denegado
 
-#### Scenario: Staff intenta generar equipos
+#### Scenario: Staff intenta reasignar un equipo
 
-- **WHEN** un usuario del grupo `staff` llama al endpoint de generación de equipos
+- **WHEN** un usuario del grupo `staff` llama al endpoint de reasignación de equipos
 - **THEN** el sistema responde 403 con un mensaje de permiso denegado
+
+#### Scenario: Staff consulta los conteos de equipos
+
+- **WHEN** un usuario del grupo `staff` llama al endpoint de conteos de equipos
+- **THEN** el sistema permite la operación, porque los conteos son necesarios para elegir el
+  equipo en la puerta
 
 ### Requirement: Manejo de sesión en el cliente de API
 

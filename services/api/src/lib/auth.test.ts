@@ -45,12 +45,15 @@ describe('matriz de roles', () => {
     expect(esRutaPermitida('staff', 'POST', '/inscripciones')).toBe(true)
     expect(esRutaPermitida('staff', 'GET', '/inscripciones/abc-123')).toBe(true)
     expect(esRutaPermitida('staff', 'POST', '/checkin')).toBe(true)
+    expect(esRutaPermitida('staff', 'GET', '/equipos/conteos')).toBe(true)
   })
 
   it('niega a staff las rutas de administración', () => {
     expect(esRutaPermitida('staff', 'POST', '/pagos/revisar')).toBe(false)
     expect(esRutaPermitida('staff', 'GET', '/pagos/pendientes')).toBe(false)
-    expect(esRutaPermitida('staff', 'POST', '/equipos/generar')).toBe(false)
+    expect(esRutaPermitida('staff', 'POST', '/equipos/asignar')).toBe(false)
+    expect(esRutaPermitida('staff', 'GET', '/equipos')).toBe(false)
+    expect(esRutaPermitida('staff', 'GET', '/equipos/Daniel')).toBe(false)
     expect(esRutaPermitida('staff', 'POST', '/checkin-mal')).toBe(false)
   })
 
@@ -190,7 +193,8 @@ describe('requireAuth (middleware)', () => {
     app.post('/inscripciones', (c) => c.json({ ok: true }))
     app.post('/checkin', (c) => c.json({ ok: true }))
     app.post('/pagos/revisar', (c) => c.json({ ok: true }))
-    app.post('/equipos/generar', (c) => c.json({ ok: true }))
+    app.post('/equipos/asignar', (c) => c.json({ ok: true }))
+    app.get('/equipos/conteos', (c) => c.json({ ok: true }))
   })
 
   async function llamar(
@@ -225,6 +229,7 @@ describe('requireAuth (middleware)', () => {
     expect((await llamar('/inscripciones', { token })).status).toBe(200)
     expect((await llamar('/inscripciones', { metodo: 'POST', token })).status).toBe(200)
     expect((await llamar('/checkin', { metodo: 'POST', token })).status).toBe(200)
+    expect((await llamar('/equipos/conteos', { token })).status).toBe(200)
   })
 
   it('niega 403 a staff en rutas de administración', async () => {
@@ -234,14 +239,15 @@ describe('requireAuth (middleware)', () => {
     expect(await revisar.json()).toEqual({
       message: 'No tienes permisos para realizar esta operación'
     })
-    expect((await llamar('/equipos/generar', { metodo: 'POST', token })).status).toBe(403)
+    expect((await llamar('/equipos/asignar', { metodo: 'POST', token })).status).toBe(403)
   })
 
   it('permite 200 a admin en rutas de campo y administración', async () => {
     const token = await firmar(['admin'])
     expect((await llamar('/checkin', { metodo: 'POST', token })).status).toBe(200)
     expect((await llamar('/pagos/revisar', { metodo: 'POST', token })).status).toBe(200)
-    expect((await llamar('/equipos/generar', { metodo: 'POST', token })).status).toBe(200)
+    expect((await llamar('/equipos/asignar', { metodo: 'POST', token })).status).toBe(200)
+    expect((await llamar('/equipos/conteos', { token })).status).toBe(200)
   })
 })
 

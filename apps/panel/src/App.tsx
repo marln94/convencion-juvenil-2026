@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Card, Input, Nav, Pill } from '@convencion/ui/components/ui'
 import { MarkNeq, SloganLockup } from '@convencion/ui/components/decorative'
 import { cerrarSesion, iniciarSesion, obtenerSesion, type SesionPanel } from './lib/auth'
+import { api } from './lib/api'
+import { cargarParticipantes } from './lib/participantes'
 import { useEstadoRed } from './lib/sincronizacion'
 import { VistaCheckin } from './vistas/Checkin'
 import { VistaDashboard } from './vistas/Dashboard'
@@ -136,6 +138,28 @@ function IndicadorConexion() {
 function Panel({ sesion }: { sesion: SesionPanel }) {
   const administrador = sesion.rol === 'admin'
   const vistasPermitidas = administrador ? VISTAS_ADMIN : VISTAS_STAFF
+
+  // Al entrar, se precarga el índice completo (para todos los roles): así el
+  // check-in y el registro in-situ funcionan aunque luego se pierda la
+  // conexión. Si falla, el escáner completa el índice participante a
+  // participante con cada lectura.
+  useEffect(() => {
+    let activo = true
+    async function precargarIndice() {
+      if (!navigator.onLine) return
+      try {
+        await cargarParticipantes(api)
+      } catch {
+        // sin conexión real o token vencido: la precarga es opcional
+      } finally {
+        if (!activo) return
+      }
+    }
+    void precargarIndice()
+    return () => {
+      activo = false
+    }
+  }, [])
 
   const [vista, setVista] = useState<VistaId>(() => {
     const actual = leerVista()

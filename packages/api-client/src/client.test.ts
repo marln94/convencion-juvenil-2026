@@ -82,32 +82,33 @@ describe('createApiClient', () => {
     expect(String(url)).toBe('https://api.example.test/pagos/pendiente')
   })
 
-  it('genera la asignación de equipos', async () => {
+  it('asigna un equipo manualmente', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ asignacion: {}, porColor: {}, bloqueado: false }, 200))
+      .mockResolvedValue(jsonResponse({ participante: { participantId: 'p-1' } }, 200))
     vi.stubGlobal('fetch', fetchMock)
 
     const api = createApiClient('https://api.example.test')
-    await api.generarEquipos()
+    await api.asignarEquipo({ participantId: 'p-1', equipoColor: 'Daniel' })
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(String(url)).toBe('https://api.example.test/equipos/generar')
+    expect(String(url)).toBe('https://api.example.test/equipos/asignar')
     expect((init as RequestInit).method).toBe('POST')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      participantId: 'p-1',
+      equipoColor: 'Daniel'
+    })
   })
 
-  it('bloquea la asignación de equipos', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(jsonResponse({ bloqueado: true, fechaGeneracion: 'T' }, 200))
+  it('obtiene los conteos por equipo', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ Daniel: 3, Rut: 1 }, 200))
     vi.stubGlobal('fetch', fetchMock)
 
     const api = createApiClient('https://api.example.test')
-    await api.bloquearEquipos()
+    await api.obtenerConteos()
 
-    const [url, init] = fetchMock.mock.calls[0]!
-    expect(String(url)).toBe('https://api.example.test/equipos/bloquear')
-    expect((init as RequestInit).method).toBe('POST')
+    const [url] = fetchMock.mock.calls[0]!
+    expect(String(url)).toBe('https://api.example.test/equipos/conteos')
   })
 
   it('actualiza los colores de equipos', async () => {
@@ -126,7 +127,7 @@ describe('createApiClient', () => {
   it('obtiene la asignación completa de equipos', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ asignacion: {}, porColor: {}, bloqueado: false }, 200))
+      .mockResolvedValue(jsonResponse({ asignacion: {}, porColor: {}, conteos: {} }, 200))
     vi.stubGlobal('fetch', fetchMock)
 
     const api = createApiClient('https://api.example.test')

@@ -1,5 +1,5 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb'
-import { BatchWriteCommand, GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import type { QueryCommandInput, ScanCommandInput } from '@aws-sdk/lib-dynamodb'
 import type { EstadoPago, Participante, ResumenParticipante, TipoRegistro } from '@convencion/shared-types'
 
@@ -10,8 +10,6 @@ const LIMITE_POR_DEFECTO = 100
 const LIMITE_MAXIMO = 500
 const GSI_ESTADO_PAGO = 'GSI-EstadoPago'
 const GSI_EQUIPO = 'GSI-Equipo'
-const TAMANO_MAXIMO_BATCH = 25
-const REINTENTOS_BATCH = 3
 
 export async function crearParticipante(participante: Participante): Promise<void> {
   const client = getDocumentClient()
@@ -42,16 +40,20 @@ export async function obtenerParticipante(participantId: string): Promise<Partic
   return resultado.Item as Participante | undefined
 }
 
-export async function marcarCheckIn(participantId: string): Promise<string> {
+export async function marcarCheckIn(participantId: string, equipoColor?: string): Promise<string> {
   const timestamp = new Date().toISOString()
   const client = getDocumentClient()
+  const asignaEquipo = equipoColor !== undefined
   await client.send(
     new UpdateCommand({
       TableName: TABLAS.participantes,
       Key: { participantId },
-      UpdateExpression:
-        'SET checkIn = :verdadero, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha)',
-      ExpressionAttributeValues: { ':verdadero': true, ':fecha': timestamp }
+      UpdateExpression: asignaEquipo
+        ? 'SET checkIn = :verdadero, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha), equipoColor = if_not_exists(equipoColor, :color)'
+        : 'SET checkIn = :verdadero, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha)',
+      ExpressionAttributeValues: asignaEquipo
+        ? { ':verdadero': true, ':fecha': timestamp, ':color': equipoColor }
+        : { ':verdadero': true, ':fecha': timestamp }
     })
   )
   return timestamp
@@ -186,6 +188,37 @@ export async function listarPorEstadoPago(estado: EstadoPago): Promise<Participa
   return todos
 }
 
+/**
+ * Conteo de integrantes por equipo mediante 13 consultas `COUNT` sobre la GSI
+ * `GSI-Equipo` (una por nombre de la lista activa). Lee el contador sin
+ * transferir los ítems, así que el costo no crece con el tamaño de cada equipo.
+ */
+export async function contarPorEquipo(colores: readonly string[]): Promise<Record<string, number>> {
+  const client = getDocumentClient()
+  const conteos: Record<string, number> = {}
+  for (const color of colores) {
+    let total = 0
+    let claveInicio: Record<string, unknown> | undefined
+    do {
+      const input: QueryCommandInput = {
+        TableName: TABLAS.participantes,
+        IndexName: GSI_EQUIPO,
+        KeyConditionExpression: 'equipoColor = :color',
+        ExpressionAttributeValues: { ':color': color },
+        Select: 'COUNT'
+      }
+      if (claveInicio) {
+        input.ExclusiveStartKey = claveInicio
+      }
+      const resultado = await client.send(new QueryCommand(input))
+      total += resultado.Count ?? 0
+      claveInicio = resultado.LastEvaluatedKey as Record<string, unknown> | undefined
+    } while (claveInicio)
+    conteos[color] = total
+  }
+  return conteos
+}
+
 export async function listarIntegrantesDeEquipo(color: string): Promise<ResumenParticipante[]> {
   const client = getDocumentClient()
   const todos: Participante[] = []
@@ -208,33 +241,26 @@ export async function listarIntegrantesDeEquipo(color: string): Promise<ResumenP
   return todos.map(aResumen)
 }
 
-export interface AsignacionEquipoItem {
-  participante: Participante
+/**
+ * Reasignación manual (admin): sobrescribe el equipo y registra el momento; si
+ * el participante aún no llega, conserva la primera llegada cuando suceda.
+ */
+export async function asignarEquipoColorManual(
+  participantId: string,
   equipoColor: string
-}
-
-export async function asignarEquipoColor(asignaciones: AsignacionEquipoItem[]): Promise<void> {
+): Promise<Participante | undefined> {
   const client = getDocumentClient()
-  for (let i = 0; i < asignaciones.length; i += TAMANO_MAXIMO_BATCH) {
-    const chunk = asignaciones.slice(i, i + TAMANO_MAXIMO_BATCH)
-    let pendientes = chunk.map(({ participante, equipoColor }) => ({
-      PutRequest: { Item: { ...participante, equipoColor } }
-    }))
-
-    for (let intento = 0; intento < REINTENTOS_BATCH && pendientes.length > 0; intento++) {
-      const resultado = await client.send(
-        new BatchWriteCommand({
-          RequestItems: { [TABLAS.participantes]: pendientes }
-        })
-      )
-      pendientes = (resultado.UnprocessedItems?.[TABLAS.participantes] ??
-        []) as unknown as typeof pendientes
-    }
-
-    if (pendientes.length > 0) {
-      throw new HttpError(500, 'No se pudo guardar la asignación de equipos')
-    }
-  }
+  const fechaAsignacion = new Date().toISOString()
+  await client.send(
+    new UpdateCommand({
+      TableName: TABLAS.participantes,
+      Key: { participantId },
+      UpdateExpression:
+        'SET equipoColor = :color, fechaAsignacionEquipo = :fecha, checkInTimestamp = if_not_exists(checkInTimestamp, :fecha)',
+      ExpressionAttributeValues: { ':color': equipoColor, ':fecha': fechaAsignacion }
+    })
+  )
+  return obtenerParticipante(participantId)
 }
 
 const TRANSICIONES_VALIDAS: Record<EstadoPago, readonly EstadoPago[]> = {

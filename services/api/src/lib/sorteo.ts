@@ -1,18 +1,8 @@
-export const COLORES_EQUIPO_POR_DEFECTO = [
-  'rojo',
-  'azul',
-  'verde',
-  'amarillo',
-  'naranja',
-  'morado',
-  'rosa',
-  'celeste',
-  'marron',
-  'gris',
-  'blanco',
-  'negro',
-  'turquesa'
-] as const
+/**
+ * Re-export de la regla de reparto: vive en `@convencion/shared-types` para que
+ * servidor y panel usen la misma elección (mínimo + desempate aleatorio).
+ */
+export { elegirEquipo } from '@convencion/shared-types'
 
 export function crearSemilla(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -31,23 +21,6 @@ export function barajar<T>(elementos: readonly T[], rng: () => number): T[] {
     copia[j] = aux
   }
   return copia
-}
-
-export function sortearEquipos(
-  ids: readonly string[],
-  colores: readonly string[],
-  semilla = crearSemilla()
-): Record<string, string> {
-  if (colores.length === 0) {
-    throw new Error('No hay colores configurados para sortear equipos')
-  }
-
-  const barajados = barajar(ids, crearGeneradorAleatorio(semilla))
-  const asignacion: Record<string, string> = {}
-  barajados.forEach((id, indice) => {
-    asignacion[id] = colores[indice % colores.length]!
-  })
-  return asignacion
 }
 
 function semillaNumerica(semilla: string): number {

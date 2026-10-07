@@ -6,55 +6,33 @@ process.env.AUTH_BYPASS_ROL = 'admin'
 
 const {
   obtenerConfigMock,
-  bloquearEquiposMock,
   actualizarColoresMock,
-  reclamarGeneracionMock,
-  listarPorEstadoPagoMock,
-  listarIntegrantesMock,
-  asignarEquipoColorMock
+  obtenerParticipanteMock,
+  asignarEquipoColorManualMock,
+  contarPorEquipoMock,
+  listarIntegrantesMock
 } = vi.hoisted(() => ({
   obtenerConfigMock: vi.fn(),
-  bloquearEquiposMock: vi.fn(),
   actualizarColoresMock: vi.fn(),
-  reclamarGeneracionMock: vi.fn(),
-  listarPorEstadoPagoMock: vi.fn(),
-  listarIntegrantesMock: vi.fn(),
-  asignarEquipoColorMock: vi.fn()
+  obtenerParticipanteMock: vi.fn(),
+  asignarEquipoColorManualMock: vi.fn(),
+  contarPorEquipoMock: vi.fn(),
+  listarIntegrantesMock: vi.fn()
 }))
 
 vi.mock('../repos/configuracion.js', () => ({
   obtenerConfiguracionEquipos: obtenerConfigMock,
-  bloquearEquipos: bloquearEquiposMock,
-  actualizarColores: actualizarColoresMock,
-  reclamarGeneracion: reclamarGeneracionMock
+  actualizarColores: actualizarColoresMock
 }))
+
 vi.mock('../repos/participantes.js', () => ({
-  crearParticipante: vi.fn(),
-  obtenerParticipante: vi.fn(),
-  listarParticipantes: vi.fn(),
-  listarPorEstadoPago: listarPorEstadoPagoMock,
-  listarIntegrantesDeEquipo: listarIntegrantesMock,
-  asignarEquipoColor: asignarEquipoColorMock
+  obtenerParticipante: obtenerParticipanteMock,
+  asignarEquipoColorManual: asignarEquipoColorManualMock,
+  contarPorEquipo: contarPorEquipoMock,
+  listarIntegrantesDeEquipo: listarIntegrantesMock
 }))
 
-import { HttpError } from '../lib/http-error.js'
 import app from './generar-equipos.js'
-
-const COLORES_DEFECTO = [
-  'rojo',
-  'azul',
-  'verde',
-  'amarillo',
-  'naranja',
-  'morado',
-  'rosa',
-  'celeste',
-  'marron',
-  'gris',
-  'blanco',
-  'negro',
-  'turquesa'
-]
 
 function pagado(id: string): Participante {
   return {
@@ -69,18 +47,19 @@ function pagado(id: string): Participante {
     esRegistroPorEncargado: false,
     tipoRegistro: 'online',
     estadoPago: 'pagado',
-    checkIn: false,
+    checkIn: true,
+    checkInTimestamp: '2026-09-10T10:00:00.000Z',
     fechaRegistro: '2026-09-01T00:00:00.000Z'
   }
 }
 
-const resumenRojo: ResumenParticipante = {
+const resumenDaniel: ResumenParticipante = {
   participantId: 'id-1',
   nombre: 'Participante id-1',
   estadoPago: 'pagado',
   fechaRegistro: '2026-09-01T00:00:00.000Z',
-  equipoColor: 'rojo',
-  checkIn: false
+  equipoColor: 'Daniel',
+  checkIn: true
 }
 
 beforeEach(() => {
@@ -89,104 +68,115 @@ beforeEach(() => {
 
 function reiniciarMocks(): void {
   obtenerConfigMock.mockReset()
-  bloquearEquiposMock.mockReset()
   actualizarColoresMock.mockReset()
-  reclamarGeneracionMock.mockReset()
-  listarPorEstadoPagoMock.mockReset()
+  obtenerParticipanteMock.mockReset()
+  asignarEquipoColorManualMock.mockReset()
+  contarPorEquipoMock.mockReset()
   listarIntegrantesMock.mockReset()
-  asignarEquipoColorMock.mockReset()
-  reclamarGeneracionMock.mockResolvedValue('2026-09-10T12:00:00.000Z')
   obtenerConfigMock.mockResolvedValue(undefined)
 }
 
-describe('POST /equipos/generar', () => {
-  it('genera asignación balanceada solo con pagados y la persiste', async () => {
-    const pagados = Array.from({ length: 51 }, (_, i) => pagado(`id-${i}`))
-    listarPorEstadoPagoMock.mockResolvedValue(pagados)
-    asignarEquipoColorMock.mockResolvedValue(undefined)
+describe('POST /equipos/asignar', () => {
+  it('reasigna el equipo de un participante y lo devuelve', async () => {
+    const pagadoDaniel = { ...pagado('id-1'), equipoColor: 'Daniel' }
+    obtenerParticipanteMock.mockResolvedValue(pagadoDaniel)
+    asignarEquipoColorManualMock.mockResolvedValue(pagadoDaniel)
 
-    const res = await app.request('/equipos/generar', { method: 'POST' })
-
-    expect(res.status).toBe(200)
-    expect(reclamarGeneracionMock).toHaveBeenCalledTimes(1)
-    const body = (await res.json()) as {
-      asignacion: Record<string, string>
-      porColor: Record<string, string[]>
-      bloqueado: boolean
-    }
-    expect(Object.keys(body.asignacion)).toHaveLength(51)
-    expect(body.bloqueado).toBe(false)
-
-    const tamagnos = COLORES_DEFECTO.map((color) => body.porColor[color]?.length ?? 0)
-    expect(Math.max(...tamagnos) - Math.min(...tamagnos)).toBeLessThanOrEqual(1)
-
-    expect(asignarEquipoColorMock).toHaveBeenCalledTimes(1)
-    const escrituras = asignarEquipoColorMock.mock.calls[0]![0] as { participante: Participante; equipoColor: string }[]
-    expect(escrituras).toHaveLength(51)
-    for (const escritura of escrituras) {
-      expect(body.asignacion[escritura.participante.participantId]).toBe(escritura.equipoColor)
-    }
-  })
-
-  it('responde 409 si la asignación está bloqueada', async () => {
-    reclamarGeneracionMock.mockRejectedValue(
-      new HttpError(409, 'La asignación de equipos está bloqueada')
-    )
-
-    const res = await app.request('/equipos/generar', { method: 'POST' })
-
-    expect(res.status).toBe(409)
-    expect(await res.json()).toEqual({ message: 'La asignación de equipos está bloqueada' })
-    expect(listarPorEstadoPagoMock).not.toHaveBeenCalled()
-  })
-
-  it('no incluye a los no pagados', async () => {
-    listarPorEstadoPagoMock.mockResolvedValue([])
-    asignarEquipoColorMock.mockResolvedValue(undefined)
-
-    const res = await app.request('/equipos/generar', { method: 'POST' })
+    const res = await app.request('/equipos/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId: 'id-1', equipoColor: 'Rut' })
+    })
 
     expect(res.status).toBe(200)
-    expect(listarPorEstadoPagoMock).toHaveBeenCalledWith('pagado')
-    const body = (await res.json()) as { asignacion: Record<string, string> }
-    expect(Object.keys(body.asignacion)).toHaveLength(0)
+    expect(asignarEquipoColorManualMock).toHaveBeenCalledWith('id-1', 'Rut')
+    const body = (await res.json()) as { participante: Participante }
+    expect(body.participante.participantId).toBe('id-1')
+  })
+
+  it('responde 404 si el participante no existe', async () => {
+    obtenerParticipanteMock.mockResolvedValue(undefined)
+
+    const res = await app.request('/equipos/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId: 'fantasma', equipoColor: 'Rut' })
+    })
+
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ message: 'El código no corresponde a un participante' })
+    expect(asignarEquipoColorManualMock).not.toHaveBeenCalled()
+  })
+
+  it('rechaza 400 si el equipo no está en la lista activa', async () => {
+    obtenerParticipanteMock.mockResolvedValue(pagado('id-1'))
+    contarPorEquipoMock.mockResolvedValue({ Daniel: 1 })
+
+    const res = await app.request('/equipos/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId: 'id-1', equipoColor: 'Azul' })
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ message: 'El equipo seleccionado no existe' })
+    expect(asignarEquipoColorManualMock).not.toHaveBeenCalled()
+  })
+
+  it('responde 400 si falta el equipoColor', async () => {
+    const res = await app.request('/equipos/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId: 'id-1' })
+    })
+
+    expect(res.status).toBe(400)
+    expect(obtenerParticipanteMock).not.toHaveBeenCalled()
   })
 })
 
-describe('POST /equipos/bloquear', () => {
-  it('bloquea la asignación y devuelve el estado', async () => {
-    bloquearEquiposMock.mockResolvedValue({
-      bloqueado: true,
-      fechaGeneracion: '2026-09-10T12:00:00.000Z'
-    })
+describe('GET /equipos/conteos', () => {
+  it('devuelve los conteos de la lista por defecto', async () => {
+    contarPorEquipoMock.mockResolvedValue({ Daniel: 10, Rut: 9 })
 
-    const res = await app.request('/equipos/bloquear', { method: 'POST' })
+    const res = await app.request('/equipos/conteos', { method: 'GET' })
 
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ bloqueado: true, fechaGeneracion: '2026-09-10T12:00:00.000Z' })
+    expect(await res.json()).toEqual({ Daniel: 10, Rut: 9 })
+    expect(contarPorEquipoMock).toHaveBeenCalledWith(
+      expect.arrayContaining(['Daniel', 'Timoteo', 'Nehemías'])
+    )
+  })
+
+  it('usa la lista configurada cuando existe', async () => {
+    obtenerConfigMock.mockResolvedValue({ configId: 'equipos', colores: ['Daniel', 'Rut'] })
+    contarPorEquipoMock.mockResolvedValue({ Daniel: 1, Rut: 2 })
+
+    await app.request('/equipos/conteos', { method: 'GET' })
+
+    expect(contarPorEquipoMock).toHaveBeenCalledWith(['Daniel', 'Rut'])
   })
 })
 
 describe('POST /equipos/config', () => {
-  it('guarda la lista de colores y devuelve la configuración', async () => {
+  it('guarda la lista de equipos y devuelve la configuración', async () => {
     actualizarColoresMock.mockResolvedValue({
       configId: 'equipos',
-      bloqueado: false,
-      colores: ['verde', 'negro']
+      colores: ['Daniel', 'Rut']
     })
 
     const res = await app.request('/equipos/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ colores: ['verde', 'negro'] })
+      body: JSON.stringify({ colores: ['Daniel', 'Rut'] })
     })
 
     expect(res.status).toBe(200)
-    expect(actualizarColoresMock).toHaveBeenCalledWith(['verde', 'negro'])
-    expect(await res.json()).toEqual({ configId: 'equipos', bloqueado: false, colores: ['verde', 'negro'] })
+    expect(actualizarColoresMock).toHaveBeenCalledWith(['Daniel', 'Rut'])
+    expect(await res.json()).toEqual({ configId: 'equipos', colores: ['Daniel', 'Rut'] })
   })
 
-  it('responde 400 si la lista de colores está vacía', async () => {
+  it('responde 400 si la lista de equipos está vacía', async () => {
     const res = await app.request('/equipos/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -199,20 +189,21 @@ describe('POST /equipos/config', () => {
 })
 
 describe('GET /equipos/:color y GET /equipos', () => {
-  it('devuelve los integrantes de un color', async () => {
-    listarIntegrantesMock.mockResolvedValue([resumenRojo])
+  it('devuelve los integrantes de un equipo', async () => {
+    listarIntegrantesMock.mockResolvedValue([resumenDaniel])
 
-    const res = await app.request('/equipos/rojo', { method: 'GET' })
+    const res = await app.request('/equipos/Daniel', { method: 'GET' })
 
     expect(res.status).toBe(200)
-    expect(listarIntegrantesMock).toHaveBeenCalledWith('rojo')
-    expect(await res.json()).toEqual({ color: 'rojo', items: [resumenRojo] })
+    expect(listarIntegrantesMock).toHaveBeenCalledWith('Daniel')
+    expect(await res.json()).toEqual({ color: 'Daniel', items: [resumenDaniel] })
   })
 
-  it('devuelve la asignación completa agrupada por color con colores por defecto', async () => {
+  it('devuelve la asignación completa con conteos', async () => {
     listarIntegrantesMock.mockImplementation(async (color: string) =>
-      color === 'rojo' ? [resumenRojo] : []
+      color === 'Daniel' ? [resumenDaniel] : []
     )
+    contarPorEquipoMock.mockResolvedValue({ Daniel: 1 })
 
     const res = await app.request('/equipos', { method: 'GET' })
 
@@ -220,28 +211,23 @@ describe('GET /equipos/:color y GET /equipos', () => {
     const body = (await res.json()) as {
       asignacion: Record<string, string>
       porColor: Record<string, string[]>
-      bloqueado: boolean
+      conteos: Record<string, number>
     }
-    expect(body.asignacion).toEqual({ 'id-1': 'rojo' })
-    expect(body.porColor['rojo']).toEqual(['id-1'])
-    expect(body.porColor['azul']).toEqual([])
-    expect(body.bloqueado).toBe(false)
+    expect(body.asignacion).toEqual({ 'id-1': 'Daniel' })
+    expect(body.porColor['Daniel']).toEqual(['id-1'])
+    expect(body.conteos['Daniel']).toBe(1)
   })
 
-  it('usa los colores configurados en GET /equipos', async () => {
-    obtenerConfigMock.mockResolvedValue({
-      configId: 'equipos',
-      bloqueado: true,
-      colores: ['verde', 'negro']
-    })
+  it('usa los equipos configurados en GET /equipos', async () => {
+    obtenerConfigMock.mockResolvedValue({ configId: 'equipos', colores: ['Daniel', 'Rut'] })
     listarIntegrantesMock.mockResolvedValue([])
+    contarPorEquipoMock.mockResolvedValue({ Daniel: 0, Rut: 0 })
 
     const res = await app.request('/equipos', { method: 'GET' })
 
     expect(res.status).toBe(200)
-    expect(listarIntegrantesMock).toHaveBeenCalledWith('verde')
-    expect(listarIntegrantesMock).toHaveBeenCalledWith('negro')
-    expect(listarIntegrantesMock).not.toHaveBeenCalledWith('rojo')
-    expect((await res.json()) as { bloqueado: boolean }).toMatchObject({ bloqueado: true })
+    expect(listarIntegrantesMock).toHaveBeenCalledWith('Daniel')
+    expect(listarIntegrantesMock).toHaveBeenCalledWith('Rut')
+    expect(contarPorEquipoMock).toHaveBeenCalledWith(['Daniel', 'Rut'])
   })
 })

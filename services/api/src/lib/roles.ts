@@ -11,14 +11,14 @@ export const RUTAS_CAMPO: ReglaRuta[] = [
   { metodo: 'GET', patron: '/inscripciones' },
   { metodo: 'POST', patron: '/inscripciones' },
   { metodo: 'GET', patron: '/inscripciones/*' },
-  { metodo: 'POST', patron: '/checkin' }
+  { metodo: 'POST', patron: '/checkin' },
+  { metodo: 'GET', patron: '/equipos/conteos' }
 ]
 
 export const RUTAS_ADMIN: ReglaRuta[] = [
   { metodo: 'POST', patron: '/pagos/revisar' },
   { metodo: 'GET', patron: '/pagos/*' },
-  { metodo: 'POST', patron: '/equipos/generar' },
-  { metodo: 'POST', patron: '/equipos/bloquear' },
+  { metodo: 'POST', patron: '/equipos/asignar' },
   { metodo: 'POST', patron: '/equipos/config' },
   { metodo: 'GET', patron: '/equipos' },
   { metodo: 'GET', patron: '/equipos/*' }
