@@ -195,7 +195,7 @@ function Panel({ sesion }: { sesion: SesionPanel }) {
       <header className="no-print sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
         <div className="container flex h-14 items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <MarkNeq size="default" aria-hidden={true} className="text-[var(--color-accent)]" style={{ width: '28px', height: '28px' }} />
+            <MarkNeq size="default" aria-hidden={true} style={{ width: '28px', height: '28px' }} />
             <span className="t-solid text-xl">Panel</span>
           </div>
           <div className="flex items-center gap-3">

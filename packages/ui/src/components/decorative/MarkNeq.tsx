@@ -1,34 +1,19 @@
-import type { SVGProps } from "react";
+import neqUrl from "@convencion/ui/assets/convencion-neq.webp";
+import type { CSSProperties } from "react";
 
-const NeqSvg = (props: SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    role="img"
-    aria-label="Diferente"
-  >
-    <defs>
-      <filter id="roughness" x="-20%" y="-20%" width="140%" height="140%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </defs>
-    <path
-      d="M20 20 L80 80 M80 20 L20 80"
-      stroke="var(--color-red)"
-      stroke-width="8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      filter="url(#roughness)"
-    />
-  </svg>
-);
+// El mismo ≠ que sirve el favicon, derivado del set de iconos entregado. Antes este
+// componente dibujaba un aspa geométrica en SVG; el símbolo suelto nunca llegó como SVG,
+// pero sí llegó compuesto en el lockup del eslogan y suelto en los PNG del favicon.
+//
+// Dimensiones intrínsecas del asset, declaradas para reservar el espacio antes de que
+// cargue el bitmap. El artwork trae ~6.9% de padding por lado: es el encuadre que el
+// diseñador dejó para los iconos, no un recorte sobrante. Recortarlo no es reversible.
+const ANCHO = 256;
+const ALTO = 256;
 
 export interface MarkNeqProps {
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   size?: "default" | "hero";
   "aria-hidden"?: boolean;
 }
@@ -38,11 +23,14 @@ export function MarkNeq({ className = "", style, size = "default", "aria-hidden"
   const sizeClass = size === "hero" ? "hero__neq" : "";
 
   return (
-    <NeqSvg
+    <img
+      src={neqUrl}
+      alt={ariaHidden ? "" : "Diferente"}
+      width={ANCHO}
+      height={ALTO}
       className={`${baseClass} ${sizeClass} ${className}`.trim()}
       style={style}
       aria-hidden={ariaHidden}
-      role={ariaHidden ? "presentation" : "img"}
     />
   );
 }

@@ -197,15 +197,40 @@ placeholders `Mi Sitio`, que se completaron con los datos reales de cada app. El
 enlaza ese manifest porque `VitePWA` ya genera el suyo, y se le cambiaron los iconos para que
 apunten a los PNG entregados.
 
-Precache del PWA del panel: 19 entradas, 1097.35 KiB, por debajo de los 1156.04 KiB que
+Precache del PWA del panel: 20 entradas, 1123.32 KiB, por debajo de los 1156.04 KiB que
 pesaba la variante con el `.ico` de 263 KB. Al instalar el service worker sobre el build real
 se observan 9 peticiones de red, ninguna repetida, y 15 entradas en `workbox-precache`.
+
+## Símbolo ≠ suelto en el design system
+
+El `≠` suelto nunca llegó como `neq-red.svg`, que era lo que bloqueaba al `MarkNeq`. Sí llegó
+dentro del set de favicons: `android-chrome-512x512.png` es exactamente el símbolo suelto en
+rojo sobre transparencia. `MarkNeq` deriva de ahí un WebP de 256×256 (16.7 KB) en
+`packages/ui/src/assets/convencion-neq.webp` y lo renderiza como `<img>` con `width`/`height`
+intrínsecos, para reservar el espacio antes de que cargue el bitmap.
+
+Se conserva el padding de 6.9% por lado del original: es el encuadre del diseñador, no un
+recorte sobrante. A 28px de caja —el tamaño del header del panel— deja ~24px de tinta visible,
+contra los ~19px que ocupaba el aspa geométrica que se reemplaza.
+
+Dos decisiones que conviene tener presentes:
+
+- **Resolución.** 256px cubre con holgura el uso real más exigente, el `MapPin`, que llega a
+  ~53px de caja (~106px a DPR 2). La variante `hero` de `.hero__neq` llega a 520px, pero no la
+  renderiza ninguna pantalla —la bienvenida y el login usan `SloganLockup`—, así que escalarla
+  2× es un techo conocido y no una regresión. A 512px el archivo pesaría 47.5 KB por el grano
+  del pincel, contra los 47.68 KiB que le quedaban de holgura al precache: lo habría consumido
+  casi por completo. A 256px son 16.71 KiB y quedan 32.72 KiB.
+- **Rojo.** El símbolo es `#D80400`; el token `--color-red` es `#D90D0D`. El aspa anterior
+  seguía el token y el artwork no puede seguirlo. El header, el login y la pestaña del
+  navegador ahora comparten el rojo del diseñador, que es justamente el objetivo del cambio.
+
+`design-system-decorative` todavía describe a `MarkNeq` como SVG inline y como fallback
+pendiente de arte final; esa redacción quedó desactualizada con este cambio.
 
 ## Assets pendientes del diseño
 
 - Textura de papel 512×512.
-- Arte final del símbolo ≠ **suelto** (el que llegó va compuesto dentro del lockup del
-  eslogan; el `MarkNeq` del header del panel sigue siendo el fallback SVG).
 - Pinceles watercolor.
 - Líneas orgánicas.
 - Mapa de Honduras y uso final de MapPin.
