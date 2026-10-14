@@ -332,27 +332,6 @@ export function VistaCheckin() {
         }
       />
 
-      {modo === 'escanear' ? (
-        <Escaner
-          alEscanear={alEscanear}
-          pausado={isResolving}
-          showHint={showHint}
-          cooldownMs={500}
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                label="Nombre"
-                placeholder="Buscar participante…"
-                value={busqueda}
-                onChange={setBusqueda}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void buscar()
-                }}
-/>
-
       {confirmacion ? (
         <Card className="print-area mb-4">
           <p className="font-semibold" style={{ color: 'var(--color-text)' }}>
@@ -392,6 +371,27 @@ export function VistaCheckin() {
           </div>
         </Card>
       ) : null}
+
+      {modo === 'escanear' ? (
+        <Escaner
+          alEscanear={alEscanear}
+          pausado={isResolving}
+          showHint={showHint}
+          cooldownMs={500}
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                label="Nombre"
+                placeholder="Buscar participante…"
+                value={busqueda}
+                onChange={setBusqueda}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void buscar()
+                }}
+              />
             </div>
             <div className="flex items-end">
               <Button onClick={() => void buscar()}>Buscar</Button>
