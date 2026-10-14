@@ -39,6 +39,23 @@ export function contarPorEquipoLocal(
   return conteos
 }
 
+/**
+ * Progreso de asignación contado solo sobre pagos confirmados: el seguimiento
+ * de equipos no debe incluir pendientes de revisión ni pagos rechazados.
+ */
+export function resumenAsignacionPagados(
+  participantes: ReadonlyArray<Pick<ResumenParticipante, 'estadoPago' | 'equipoColor'>>
+): { pagados: number; asignados: number; sinEquipo: number } {
+  let pagados = 0
+  let asignados = 0
+  for (const participante of participantes) {
+    if (participante.estadoPago !== 'pagado') continue
+    pagados++
+    if (participante.equipoColor) asignados++
+  }
+  return { pagados, asignados, sinEquipo: pagados - asignados }
+}
+
 export function elegirEquipoLocal(
   participantes: ReadonlyArray<Pick<ResumenParticipante, 'equipoColor'>>,
   rng: () => number = Math.random

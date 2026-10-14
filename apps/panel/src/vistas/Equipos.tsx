@@ -3,7 +3,7 @@ import type { EquiposAsignacionOutput, ResumenParticipante } from '@convencion/s
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Alert, Button, Card, VistaHeader } from '@convencion/ui/components/ui'
-import { hexPorNombre, textoSobreColor } from '../lib/equipos'
+import { hexPorNombre, resumenAsignacionPagados, textoSobreColor } from '../lib/equipos'
 import { EquipoChip } from '../lib/equipo-chip'
 import { actualizarEquiposEnIndice, buscarEnIndice } from '../lib/indice'
 import { api } from '../lib/api'
@@ -15,7 +15,7 @@ function nombreDe(indice: Map<string, string>, participantId: string): string {
 export function VistaEquipos() {
   const [asignacion, setAsignacion] = useState<EquiposAsignacionOutput | null>(null)
   const [nombres, setNombres] = useState<Map<string, string>>(new Map())
-  const [total, setTotal] = useState(0)
+  const [participantes, setParticipantes] = useState<ResumenParticipante[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [moviendo, setMoviendo] = useState<string | null>(null)
@@ -27,7 +27,7 @@ export function VistaEquipos() {
       const [equipos, indice] = await Promise.all([api.obtenerEquipos(), buscarEnIndice('')])
       setAsignacion(equipos)
       setNombres(new Map(indice.map((i: ResumenParticipante) => [i.participantId, i.nombre])))
-      setTotal(indice.length)
+      setParticipantes(indice)
     } catch (causa) {
       if (causa instanceof ApiError) {
         setError(causa.message)
@@ -52,11 +52,10 @@ export function VistaEquipos() {
     }))
   }, [asignacion])
 
-  const asignados = useMemo(() => {
-    if (!asignacion) return 0
-    return Object.values(asignacion.conteos).reduce((suma, n) => suma + n, 0)
-  }, [asignacion])
-  const sinEquipo = Math.max(total - asignados, 0)
+  const { pagados, asignados, sinEquipo } = useMemo(
+    () => resumenAsignacionPagados(participantes),
+    [participantes]
+  )
 
   const mover = async (participantId: string, equipoColor: string) => {
     setMoviendo(participantId)
@@ -125,13 +124,13 @@ export function VistaEquipos() {
             <span style={{ color: 'var(--color-text)' }}>
               <strong>{asignados}</strong> asignados
             </span>
-            <span style={{ color: 'var(--color-ink-soft)' }}>de {total} participantes</span>
+            <span style={{ color: 'var(--color-ink-soft)' }}>de {pagados} pagados</span>
             <span className="ml-auto flex items-center gap-2">
               <EquipoChip />
               {sinEquipo} sin equipo
             </span>
           </div>
-          {total > 0 ? (
+          {pagados > 0 ? (
             <div
               className="mt-3 h-2 rounded-full overflow-hidden"
               style={{ background: 'var(--color-paper-light)', border: '1px solid var(--color-border)' }}
@@ -139,7 +138,7 @@ export function VistaEquipos() {
               <div
                 className="h-full rounded-full"
                 style={{
-                  width: `${Math.min((asignados / total) * 100, 100)}%`,
+                  width: `${Math.min((asignados / pagados) * 100, 100)}%`,
                   background: 'var(--color-accent)'
                 }}
               />

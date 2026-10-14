@@ -6,6 +6,7 @@ import {
   contarPorEquipoLocal,
   elegirEquipoLocal,
   hexPorNombre,
+  resumenAsignacionPagados,
   textoSobreColor
 } from './equipos.js'
 
@@ -63,6 +64,38 @@ describe('contarPorEquipoLocal', () => {
     ])
     expect(conteos['Daniel']).toBe(2)
     expect(conteos['María']).toBe(1)
+  })
+})
+
+describe('resumenAsignacionPagados', () => {
+  function pago(
+    estadoPago: ResumenParticipante['estadoPago'],
+    equipoColor?: string
+  ): Pick<ResumenParticipante, 'estadoPago' | 'equipoColor'> {
+    return { estadoPago, equipoColor }
+  }
+
+  it('cuenta como sin equipo solo a los pagados que aún no tienen equipo', () => {
+    const resumen = resumenAsignacionPagados([
+      pago('pagado'),
+      pago('pagado', 'Daniel'),
+      pago('pendiente'),
+      pago('rechazado')
+    ])
+    expect(resumen).toEqual({ pagados: 2, asignados: 1, sinEquipo: 1 })
+  })
+
+  it('ignora pendientes y rechazados aunque no tengan equipo', () => {
+    const resumen = resumenAsignacionPagados([
+      pago('pendiente'),
+      pago('rechazado'),
+      pago('rechazado', 'María')
+    ])
+    expect(resumen).toEqual({ pagados: 0, asignados: 0, sinEquipo: 0 })
+  })
+
+  it('devuelve ceros sin participantes', () => {
+    expect(resumenAsignacionPagados([])).toEqual({ pagados: 0, asignados: 0, sinEquipo: 0 })
   })
 })
 
