@@ -168,14 +168,22 @@ describe('sincronizarCola', () => {
     expect(await contarDescartadas()).toBe(0)
   })
 
-  it('vacía la cola cuando todo se sincroniza', async () => {
+  })
+
+  it('devuelve las descartadas del pase', async () => {
     await encolarOperacion('registro_insitu', registroInSitu(PARTICIPANTE))
     await encolarOperacion('checkin', { participantId: PARTICIPANTE })
 
-    await sincronizarCola(clienteQueAcepta())
+    const api = {
+      registrarParticipante: vi.fn().mockRejectedValue(new ApiError(400, 'Edad no permitida')),
+      checkIn: vi.fn().mockResolvedValue({})
+    } as unknown as ApiClient
 
-    expect(await contarPendientes()).toBe(0)
-    expect(await contarDescartadas()).toBe(0)
+    const descartadas = await sincronizarCola(api)
+
+    expect(descartadas).toHaveLength(1)
+    expect(descartadas[0]!.tipo).toBe('registro_insitu')
+    expect(descartadas[0]!.motivo).toBe('Edad no permitida')
   })
 
   it('no vuelve a intentar una operación ya descartada', async () => {
@@ -187,7 +195,6 @@ describe('sincronizarCola', () => {
 
     expect(api.registrarParticipante).toHaveBeenCalledTimes(1)
   })
-})
 
 describe('persistencia: upgrade a la v2', () => {
   it('crea cola, índice y descartadas en una base nueva', async () => {

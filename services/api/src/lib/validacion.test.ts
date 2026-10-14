@@ -39,13 +39,10 @@ describe('registrarParticipanteSchema', () => {
     expect(resultado.success && resultado.data.contacto).toBe('1122-3344')
   })
 
-  it('acepta un contacto que es un correo válido', () => {
-    const resultado = registrarParticipanteSchema.safeParse({
-      ...base,
-      contacto: 'ana@example.com',
-      comprobante: { contentType: 'image/png', s3Key: 'comprobantes/a.png' }
-    })
-    expect(resultado.success).toBe(true)
+  it('rechaza contacto que es un correo (el correo va en el campo correo)', () => {
+    expect(legible({ ...base, contacto: 'ana@example.com' })).toBe(
+      'El contacto debe ser un teléfono 8877-9955'
+    )
   })
 
   it('rechaza registro sin nombre', () => {
@@ -73,43 +70,49 @@ describe('registrarParticipanteSchema', () => {
 
   it('rechaza contacto con formato inválido', () => {
     expect(legible({ ...base, contacto: 'invalido' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
   it('rechaza contacto con menos de 8 dígitos', () => {
     expect(legible({ ...base, contacto: '1122-334' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
   it('rechaza contacto con más de 8 dígitos', () => {
     expect(legible({ ...base, contacto: '1122-33445' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
-  it('rechaza contacto numérico sin guion o con separadores inválidos', () => {
-    expect(legible({ ...base, contacto: '11223344' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
-    )
+  it('acepta contacto de 8 dígitos sin guion y lo normaliza', () => {
+    const resultado = registrarParticipanteSchema.safeParse({
+      ...onlineCompleto,
+      contacto: '11223344'
+    })
+    expect(resultado.success).toBe(true)
+    expect(resultado.success && resultado.data.contacto).toBe('1122-3344')
+  })
+
+  it('rechaza contacto numérico con separadores inválidos', () => {
     expect(legible({ ...base, contacto: '1122 3344' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
     expect(legible({ ...base, contacto: '1122-33 44' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
   it('rechaza contacto que no es teléfono ni correo', () => {
     expect(legible({ ...base, contacto: 'solo-texto' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
   it('rechaza contacto con formato de correo inválido', () => {
     expect(legible({ ...base, contacto: 'no-es-un-correo@' })).toBe(
-      'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+      'El contacto debe ser un teléfono 8877-9955'
     )
   })
 
@@ -194,7 +197,7 @@ describe('registrarParticipanteSchema', () => {
   it('acepta registro in situ sin comprobante con equipo', () => {
     const resultado = registrarParticipanteSchema.safeParse({
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       equipoColor: 'David',
       localidad: 'San Pedro Sula',
@@ -209,7 +212,7 @@ describe('registrarParticipanteSchema', () => {
   it('rechaza registro in situ sin equipo', () => {
     const resultado = registrarParticipanteSchema.safeParse({
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       localidad: 'San Pedro Sula',
       region: '12',

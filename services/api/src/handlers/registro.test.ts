@@ -91,7 +91,7 @@ describe('POST /inscripciones (in situ)', () => {
   it('registra in situ con estado pagado, equipo asignado y checkIn', async () => {
     const res = await post('/inscripciones', {
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       equipoColor: 'David',
       localidad: 'San Pedro Sula',
@@ -117,7 +117,7 @@ describe('POST /inscripciones (in situ)', () => {
   it('rechaza 400 si falta el equipo en el registro in situ', async () => {
     const res = await post('/inscripciones', {
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       localidad: 'San Pedro Sula',
       region: '12',
@@ -136,7 +136,7 @@ describe('POST /inscripciones (in situ)', () => {
 
     const res = await post('/inscripciones', {
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       equipoColor: 'Azul',
       localidad: 'San Pedro Sula',
@@ -156,7 +156,7 @@ describe('POST /inscripciones (in situ)', () => {
     const res = await post('/inscripciones', {
       participantId: idFijo,
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       equipoColor: 'Rut',
       localidad: 'San Pedro Sula',
@@ -179,7 +179,7 @@ describe('POST /inscripciones (in situ)', () => {
     const res = await post('/inscripciones', {
       participantId: 'no-es-uuid',
       nombre: 'Leo García',
-      contacto: 'leo@example.com',
+      contacto: '8877-1122',
       tipoRegistro: 'in_situ',
       equipoColor: 'Rut',
       localidad: 'San Pedro Sula',
@@ -238,7 +238,16 @@ describe('validaciones de datos', () => {
   it('rechaza contacto con formato inválido', async () => {
     const res = await post('/inscripciones', { ...onlineValido, contacto: 'invalido' })
     expect(res.status).toBe(400)
-    expect(await res.json()).toEqual({ message: 'El contacto debe ser un teléfono 8877-9955 o un correo válido' })
+    expect(await res.json()).toEqual({ message: 'El contacto debe ser un teléfono 8877-9955' })
+  })
+
+  it('normaliza el contacto de 8 dígitos sin guion antes de persistirlo', async () => {
+    const res = await post('/inscripciones', { ...onlineValido, contacto: '11223344' })
+
+    expect(res.status).toBe(201)
+    expect(crearParticipanteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ contacto: '1122-3344' })
+    )
   })
 
   it('rechaza tipo de registro inválido', async () => {

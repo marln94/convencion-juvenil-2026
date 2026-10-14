@@ -1,4 +1,4 @@
-import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
+import { EDAD_MAXIMA, EDAD_MINIMA, PATRON_CORREO, esCorreo, esTelefono, normalizarTelefono, rangoEdadPermitido } from '@convencion/shared-types'
 import { z } from 'zod'
 
 import { CONTENT_TYPES_PERMITIDOS } from './comprobante.js'
@@ -8,14 +8,13 @@ const REGIONES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
 const DIAS_ASISTENCIA = ['jueves-24', 'viernes-25', 'sabado-26', 'domingo-27'] as const
 const ROLES = ['joven', 'encargado', 'nexo'] as const
 
-const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PATRON_TELEFONO = /^\d{4}-\d{4}$/
-
-function validarContacto(valor: string): boolean {
-  if (valor.includes('@')) {
-    return PATRON_EMAIL.test(valor)
-  }
-  return PATRON_TELEFONO.test(valor)
+/**
+ * `encargadoContacto` es un único campo de contacto para el encargado (no hay
+ * `encargadoCorreo`), así que acepta teléfono o correo. El `contacto` del
+ * participante, en cambio, es solo teléfono: el correo vive en `correo`.
+ */
+function esContactoDeEncargado(valor: string): boolean {
+  return esTelefono(valor) || esCorreo(valor)
 }
 
 function contieneNumeros(valor: string): boolean {
@@ -42,9 +41,15 @@ const contactoSchema = z
   .string()
   .trim()
   .optional()
-  .refine((valor) => !valor || validarContacto(valor), {
-    message: 'El contacto debe ser un teléfono 8877-9955 o un correo válido'
+  .superRefine((valor, ctx) => {
+    if (valor && !normalizarTelefono(valor)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'El contacto debe ser un teléfono 8877-9955'
+      })
+    }
   })
+  .transform((valor) => (valor ? normalizarTelefono(valor) ?? valor : undefined))
 
 const localidadSchema = z.string().trim().min(1, { message: 'La localidad es obligatoria' })
 
@@ -67,7 +72,7 @@ export const registrarParticipanteSchema = z
     participantId: z.string().uuid({ message: 'El participantId es inválido' }).optional(),
     nombre: nombreSchema,
     contacto: contactoSchema,
-    correo: z.string().trim().optional().refine((valor) => !valor || PATRON_EMAIL.test(valor), { message: 'El correo es inválido' }),
+    correo: z.string().trim().optional().refine((valor) => !valor || PATRON_CORREO.test(valor), { message: 'El correo es inválido' }),
     localidad: localidadSchema,
     region: regionSchema,
     edad: edadSchema,
@@ -118,7 +123,7 @@ export const registrarParticipanteSchema = z
         message: 'El nombre del encargado debe incluir nombre y apellido'
       })
     }
-    if (datos.encargadoContacto?.trim() && !validarContacto(datos.encargadoContacto.trim())) {
+    if (datos.encargadoContacto?.trim() && !esContactoDeEncargado(datos.encargadoContacto.trim())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['encargadoContacto'],

@@ -5,7 +5,7 @@ import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput, Rol } from '@convencion/shared-types'
 import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
 
-import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, StepIndicator, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, StepIndicator, TelefonoInput, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { SloganLockup } from '@convencion/ui/components/decorative'
 import { api } from './lib/api'
 import { esTipoComprobantePermitido, subirComprobante } from './lib/comprobante'
@@ -57,7 +57,6 @@ const DATOS_INICIALES: DatosFormulario = {
 }
 
 const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PATRON_TELEFONO = /^\d{4}-\d{4}$/
 
 const REGIONES: [string, string][] = [
   ['1', 'Región 1 - Francisco Morazán 1'],
@@ -139,7 +138,7 @@ export function App() {
         }
         case 'contacto': {
           const v = datos.contacto.trim()
-          if (v && !PATRON_TELEFONO.test(v)) {
+          if (v && !/^\d{4}-\d{4}$/.test(v)) {
             return 'El contacto debe ser un teléfono 8877-9955'
           }
           return undefined

@@ -6,8 +6,10 @@ import { Alert, Button, Card, Input, Nav, Pill } from '@convencion/ui/components
 import { MarkNeq, SloganLockup } from '@convencion/ui/components/decorative'
 import { cerrarSesion, iniciarSesion, obtenerSesion, type SesionPanel } from './lib/auth'
 import { api } from './lib/api'
+import { limpiarDescartadas, listarDescartadas } from './lib/cola'
+import type { OperacionDescartada } from './lib/cola'
 import { cargarParticipantes } from './lib/participantes'
-import { useEstadoRed } from './lib/sincronizacion'
+import { useEstadoRed, refrescarPendientes } from './lib/sincronizacion'
 import { VistaCheckin } from './vistas/Checkin'
 import { VistaDashboard } from './vistas/Dashboard'
 import { VistaEquipos } from './vistas/Equipos'
@@ -106,6 +108,18 @@ function Login({ alIngresar }: { alIngresar: () => void }) {
 
 function IndicadorConexion() {
   const { enLinea, sincronizando, pendientes, descartadas } = useEstadoRed()
+  const [abierto, setAbierto] = useState(false)
+  const [lista, setLista] = useState<OperacionDescartada[]>([])
+
+  const cargar = useCallback(async () => {
+    const l = await listarDescartadas()
+    setLista(l.slice(-20))
+  }, [])
+
+  const toggle = () => {
+    setAbierto((o) => !o)
+    if (!abierto) void cargar()
+  }
 
   const principal = !enLinea
     ? <Pill variant="amber">Sin conexión</Pill>
@@ -119,19 +133,49 @@ function IndicadorConexion() {
     return principal
   }
 
-  // Las descartadas son operaciones que el servidor rechazó de forma
-  // definitiva. Salen de la cola, así que no aparecen en el contador de
-  // pendientes: sin este indicador, un registro rechazado sería invisible.
   return (
-    <span className="flex items-center gap-2">
+    <div className="flex items-center gap-2" style={{ position: "relative" }}>
       {principal}
-      <Pill
-        variant="red"
-        title={`${descartadas} ${descartadas === 1 ? 'operación rechazada' : 'operaciones rechazadas'} por el servidor. Hay que registrarlas de nuevo.`}
+      <button
+        type="button"
+        onClick={toggle}
+        title={`${descartadas} ${descartadas === 1 ? "operación rechazada" : "operaciones rechazadas"} por el servidor.`}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
       >
-        {descartadas} rechazadas
-      </Pill>
-    </span>
+        <Pill variant="red">{descartadas} rechazadas</Pill>
+      </button>
+      {abierto && (
+        <Card className="absolute top-full right-0 mt-2 z-50" style={{ minWidth: "320px", maxWidth: "400px" }}>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="text-sm font-bold">Operaciones rechazadas</h3>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await limpiarDescartadas()
+                await refrescarPendientes()
+                setAbierto(false)
+                setLista([])
+              }}
+            >
+              Marcar como revisadas
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2" style={{ maxHeight: "240px", overflowY: "auto" }}>
+            {lista.length === 0 ? (
+              <p className="text-xs">Sin detalles</p>
+            ) : (
+              lista.map((d) => (
+                <div key={d.id} className="text-xs" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "0.5rem" }}>
+                  <div><strong>{new Date(d.descartadaEn).toLocaleString()}</strong> · {d.tipo}</div>
+                  <div>{d.tipo === "registro_insitu" ? d.payload.nombre : "checkin"} ({d.payload.participantId})</div>
+                  <div>Motivo: {d.motivo} ({d.status})</div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      )}
+    </div>
   )
 }
 

@@ -1,5 +1,6 @@
 export { Button, type ButtonProps, type ButtonVariant } from "./Button";
 export { Input, type InputProps } from "./Input";
+export { TelefonoInput, type TelefonoInputProps } from "./TelefonoInput";
 export { Select, type SelectProps } from "./Select";
 export { Card, CardTag, type CardProps, type CardTagProps } from "./Card";
 export { Alert, type AlertProps, type AlertVariant } from "./Alert";

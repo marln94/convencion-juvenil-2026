@@ -99,9 +99,10 @@ export async function limpiarDescartadas(): Promise<void> {
   await db.clear('descartadas')
 }
 
-export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
+export async function sincronizarCola(apiCliente: ApiClient): Promise<OperacionDescartada[]> {
   const db = await obtenerBaseDatos()
   const pendientes = (await db.getAll('cola')) as OperacionCola[]
+  const descartadas: OperacionDescartada[] = []
 
   for (const operacion of pendientes) {
     try {
@@ -113,7 +114,8 @@ export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
       await eliminarDeCola(operacion.id)
     } catch (error) {
       if (error instanceof ApiError && RESPUESTAS_DEFINITIVAS.has(error.status)) {
-        await descartar(operacion, error)
+        const d = await descartar(operacion, error)
+        descartadas.push(d)
       } else {
         // Transitorio: se detiene la sincronización para no perder el orden; el
         // resto queda en cola y se reintenta en el próximo evento de red.
@@ -121,9 +123,10 @@ export async function sincronizarCola(apiCliente: ApiClient): Promise<void> {
       }
     }
   }
+  return descartadas
 }
 
-async function descartar(operacion: OperacionCola, error: ApiError): Promise<void> {
+async function descartar(operacion: OperacionCola, error: ApiError): Promise<OperacionDescartada> {
   await eliminarDeCola(operacion.id)
   if (operacion.tipo === 'registro_insitu') {
     // El registro in situ escribe en el índice local antes de encolar, así que
@@ -142,6 +145,7 @@ async function descartar(operacion: OperacionCola, error: ApiError): Promise<voi
   console.warn(
     `[cola] operación descartada (${error.status}): ${operacion.tipo} ${operacion.id} — ${error.message}`
   )
+  return descartada
 }
 
 async function putCola(operacion: OperacionCola): Promise<void> {

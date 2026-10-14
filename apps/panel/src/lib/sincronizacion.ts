@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 
 import { api } from './api.js'
 import { contarDescartadas, contarPendientes, sincronizarCola } from './cola.js'
+import type { OperacionDescartada } from './cola.js'
 
 let enLinea = navigator.onLine
 let sincronizando = false
@@ -57,12 +58,13 @@ export async function refrescarPendientes(): Promise<void> {
   emitir()
 }
 
-export async function sincronizar(): Promise<void> {
-  if (!enLinea || sincronizando) return
+export async function sincronizar(): Promise<OperacionDescartada[]> {
+  if (!enLinea || sincronizando) return []
   sincronizando = true
   emitir()
   try {
-    await sincronizarCola(api)
+    const descartadas = await sincronizarCola(api)
+    return descartadas
   } finally {
     sincronizando = false
     await refrescarPendientes()

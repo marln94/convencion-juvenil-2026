@@ -66,7 +66,9 @@ El sistema SHALL permitir registrar a un participante a través de la API con `e
 
 #### Scenario: Registro online con rol inválido
 - **WHEN** se envía un registro con `rol` fuera de `{joven, encargado, nexo}`
-- **THEN** el sistema rechaza la solicitud con un error 400 indicando rol inválido### Requirement: Registro por encargado
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando rol inválido
+
+### Requirement: Registro por encargado
 
 
 Cuando el participante es inscrito por un encargado (por ejemplo un padre inscribiendo a su hijo), el sistema SHALL capturar los datos del participante y los del encargado, y SHALL devolverlos vinculados en el mismo registro para identificar quién responde por el participante durante el evento. Los datos del encargado SHALL validarse con las mismas reglas que los del participante: `encargadoNombre` sin números y con al menos dos palabras, y `encargadoContacto` como correo válido o teléfono `8877-9955`. **Los campos extendidos (localidad, region, edad, diasAsistencia, rol) pertenecen al participante y son obligatorios independientemente de si es registro por encargado**.

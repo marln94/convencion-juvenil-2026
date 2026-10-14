@@ -9,6 +9,7 @@ import { decidirEquipoParaLlegada } from '../lib/equipos'
 import { EquipoChip } from '../lib/equipo-chip'
 import { agregarAlIndice, buscarEnIndice, obtenerDelIndice } from '../lib/indice'
 import { sincronizar } from '../lib/sincronizacion'
+import type { OperacionDescartada } from '../lib/cola'
 
 type Modo = 'escanear' | 'buscar'
 
@@ -269,7 +270,12 @@ export function VistaCheckin() {
       )
       if (navigator.onLine) {
         try {
-          await sincronizar()
+          const descartadas = await sincronizar()
+          const descartada = descartadas.find((d: any) => d.tipo === 'checkin' && d.payload.participantId === resumen.participantId)
+          if (descartada) {
+            setMensaje("La llegada no se registró en el servidor: " + descartada.motivo)
+            return
+          }
         } catch {
           // silencioso: la operación queda en cola y el header ya muestra "N sin sincronizar"
         }

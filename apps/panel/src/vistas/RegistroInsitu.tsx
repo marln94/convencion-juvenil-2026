@@ -1,18 +1,16 @@
 import type { Participante, RegistrarParticipanteOutput, Rol } from '@convencion/shared-types'
-import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
+import { EDAD_MAXIMA, EDAD_MINIMA, esCorreo, esTelefono, rangoEdadPermitido } from '@convencion/shared-types'
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 
-import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, VistaHeader } from '@convencion/ui/components/ui'
+import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, TelefonoInput, VistaHeader } from '@convencion/ui/components/ui'
 import { api } from '../lib/api'
 import { encolarOperacion } from '../lib/cola'
 import { decidirEquipoParaLlegada } from '../lib/equipos'
 import { EquipoChip } from '../lib/equipo-chip'
 import { agregarAlIndice } from '../lib/indice'
 import { sincronizar } from '../lib/sincronizacion'
-
-const PATRON_TELEFONO = /^\d{4}-\d{4}$/
-const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import type { OperacionDescartada } from '../lib/cola'
 
 const REGIONES: [string, string][] = [
   ['1', 'Región 1 - Francisco Morazán 1'],
@@ -42,10 +40,6 @@ const ROLES: [string, string][] = [
   ['encargado', 'Encargado'],
   ['nexo', 'Nexo'],
 ]
-
-function validarContacto(valor: string): boolean {
-  return valor.includes('@') ? PATRON_CORREO.test(valor) : PATRON_TELEFONO.test(valor)
-}
 
 function contieneNumeros(valor: string): boolean {
   return /\d/.test(valor)
@@ -77,8 +71,8 @@ function validar(datos: DatosFormulario): string | null {
   if (!datos.nombre.trim()) return 'El nombre es obligatorio'
   if (contieneNumeros(datos.nombre)) return 'El nombre no puede contener números'
   if (datos.nombre.trim().split(/\s+/).length < 2) return 'El nombre debe incluir nombre y apellido'
-  if (datos.contacto.trim() && !validarContacto(datos.contacto.trim())) return 'El contacto debe ser un teléfono 8877-9955 o un correo válido'
-  if (datos.correo.trim() && !PATRON_CORREO.test(datos.correo.trim())) return 'El correo es inválido'
+  if (datos.contacto.trim() && !esTelefono(datos.contacto.trim())) return 'El contacto debe ser un teléfono 8877-9955'
+  if (datos.correo.trim() && !esCorreo(datos.correo.trim())) return 'El correo no tiene un formato válido'
   if (!datos.localidad.trim()) return 'La localidad es obligatoria'
   if (!datos.region) return 'Seleccioná una región válida'
   if (!REGIONES.some(([r]) => r === datos.region)) return 'Seleccioná una región válida'
@@ -93,20 +87,63 @@ function validar(datos: DatosFormulario): string | null {
 
 export function VistaRegistroInsitu() {
   const [datos, setDatos] = useState<DatosFormulario>(INICIO)
-  const [error, setError] = useState<string | null>(null)
+  const [tocado, setTocado] = useState<Record<string, boolean>>({})
+  const [errorGlobal, setErrorGlobal] = useState<string | null>(null)
   const [procesando, setProcesando] = useState(false)
   const [resultado, setResultado] = useState<RegistrarParticipanteOutput | null>(null)
   const [pendiente, setPendiente] = useState(false)
+  const [descartadas, setDescartadas] = useState<OperacionDescartada[]>([])
 
   const actualizar = <K extends keyof DatosFormulario>(campo: K, valor: DatosFormulario[K]) => {
     setDatos((prev) => ({ ...prev, [campo]: valor }))
+    setTocado((prev) => ({ ...prev, [campo]: true }))
+  }
+
+  const errorDe = (campo: keyof DatosFormulario): string | undefined => {
+    if (!tocado[campo]) return undefined
+    if (campo === 'nombre') {
+      const v = datos.nombre.trim()
+      if (!v) return 'El nombre es obligatorio'
+      if (contieneNumeros(v)) return 'El nombre no puede contener números'
+      if (v.split(/\s+/).length < 2) return 'El nombre debe incluir nombre y apellido'
+    }
+    if (campo === 'contacto') {
+      const v = datos.contacto.trim()
+      if (v && !esTelefono(v)) return 'El contacto debe ser un teléfono 8877-9955'
+    }
+    if (campo === 'correo') {
+      const v = datos.correo.trim()
+      if (v && !esCorreo(v)) return 'El correo no tiene un formato válido'
+    }
+    if (campo === 'localidad') {
+      const v = datos.localidad.trim()
+      if (!v) return 'La localidad es obligatoria'
+    }
+    if (campo === 'region') {
+      if (!datos.region) return 'Seleccioná una región válida'
+      if (!REGIONES.some(([r]) => r === datos.region)) return 'Seleccioná una región válida'
+    }
+    if (campo === 'edad') {
+      const v = datos.edad.trim()
+      if (!v) return 'La edad es obligatoria'
+      if (!edadEnRango(v, rangoEdadPermitido(datos.rol))) return 'Edad no permitida'
+    }
+    if (campo === 'diasAsistencia') {
+      if (!datos.diasAsistencia || datos.diasAsistencia.length === 0) return 'Seleccioná al menos un día de asistencia'
+      if (!datos.diasAsistencia.every((d) => DIAS_ASISTENCIA_OPTIONS.some((dia) => dia.value === d))) return 'Día de asistencia inválido'
+    }
+    if (campo === 'rol') {
+      if (!datos.rol) return 'Seleccioná un rol válido'
+      if (!ROLES.some(([r]) => r === datos.rol)) return 'Seleccioná un rol válido'
+    }
+    return undefined
   }
 
   const enviar = async () => {
-    setError(null)
+    setErrorGlobal(null)
     const problema = validar(datos)
     if (problema) {
-      setError(problema)
+      setErrorGlobal(problema)
       return
     }
     setProcesando(true)
@@ -136,9 +173,11 @@ export function VistaRegistroInsitu() {
         checkIn: true,
       })
       const sinConectar = !navigator.onLine
+      let descartadas: OperacionDescartada[] = []
       if (!sinConectar) {
-        await sincronizar()
+        descartadas = await sincronizar()
       }
+      setDescartadas(descartadas)
       setPendiente(sinConectar)
       const participante: Participante = {
         participantId,
@@ -189,7 +228,13 @@ export function VistaRegistroInsitu() {
               Sin conexión: el registro quedó en cola local y se sincronizará al volver la señal.
             </Alert>
           ) : (
-            <Alert variant="success">Registro sincronizado con el servidor.</Alert>
+            (() => {
+              const descartada = descartadas.find((d: any) => d.tipo === "registro_insitu" && d.payload.participantId === resultado.participante.participantId)
+              if (descartada) {
+                return <Alert variant="error">Registro no sincronizado: {descartada.motivo}</Alert>
+              }
+              return <Alert variant="success">Registro sincronizado con el servidor.</Alert>
+            })()
           )}
           <Button variant="outline" fullWidth onClick={() => { setResultado(null); setPendiente(false) }}>
             Nuevo registro
@@ -213,14 +258,14 @@ export function VistaRegistroInsitu() {
             void enviar()
           }}
         >
-          <Input label="Nombre completo" value={datos.nombre} onChange={(v) => actualizar('nombre', v)} required />
-          <Input label="Contacto (teléfono 8877-1122 o correo)" value={datos.contacto} onChange={(v) => actualizar('contacto', v)} />
-          <Input label="Correo (opcional)" value={datos.correo} onChange={(v) => actualizar('correo', v)} />
-          <Input label="Localidad" value={datos.localidad} onChange={(v) => actualizar('localidad', v)} required />
+          <Input label="Nombre completo" value={datos.nombre} onChange={(v) => actualizar('nombre', v)} onBlur={() => setTocado(t => ({...t,"nombre":true}))} error={errorDe("nombre")} required />
+          <TelefonoInput label="Teléfono (opcional)" value={datos.contacto} onChange={(v) => actualizar('contacto', v)} onBlur={() => setTocado(t => ({...t,"contacto":true}))} error={errorDe("contacto")} />
+          <Input label="Correo (opcional)" type="email" value={datos.correo} onChange={(v) => actualizar('correo', v)} onBlur={() => setTocado(t => ({...t,"correo":true}))} error={errorDe("correo")} />
+          <Input label="Localidad" value={datos.localidad} onChange={(v) => actualizar('localidad', v)} onBlur={() => setTocado(t => ({...t,"localidad":true}))} error={errorDe("localidad")} required />
           <Select
             label="Región"
             value={datos.region}
-            onChange={(v) => actualizar('region', v)}
+            onChange={(v) => actualizar('region', v)} onBlur={() => setTocado(t => ({...t,"region":true}))} error={errorDe("region")}
             options={REGIONES}
             required
           />
@@ -234,7 +279,7 @@ export function VistaRegistroInsitu() {
           <EdadField
             label="Edad"
             value={datos.edad}
-            onChange={(v) => actualizar('edad', v)}
+            onChange={(v) => actualizar('edad', v)} onBlur={() => setTocado(t => ({...t,"edad":true}))}
             minimo={EDAD_MINIMA}
             maximo={EDAD_MAXIMA}
             rangoPermitido={rangoEdadPermitido(datos.rol)}
@@ -248,7 +293,7 @@ export function VistaRegistroInsitu() {
             required
           />
 
-          {error && <Alert variant="error">{error}</Alert>}
+          {errorGlobal && <Alert variant="error">{errorGlobal}</Alert>}
 
           <Button fullWidth className="min-h-14 text-base" disabled={procesando}>
             {procesando ? 'Creando…' : 'Crear registro y gafete'}
