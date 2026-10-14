@@ -3,7 +3,7 @@ import { Fragment, useCallback, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { ApiError } from '@convencion/api-client'
 import type { RegistrarParticipanteOutput, Rol } from '@convencion/shared-types'
-import { EDAD_MAXIMA, EDAD_MINIMA, rangoEdadPermitido } from '@convencion/shared-types'
+import { EDAD_MAXIMA, EDAD_MINIMA, esTelefono, rangoEdadPermitido } from '@convencion/shared-types'
 
 import { Alert, Button, Card, DayPicker, EdadField, edadEnRango, Input, Select, StepIndicator, TelefonoInput, VistaHeader, Hero, Brush, Container, Section, InfoBlock } from '@convencion/ui/components/ui'
 import { SloganLockup } from '@convencion/ui/components/decorative'
@@ -138,7 +138,7 @@ export function App() {
         }
         case 'contacto': {
           const v = datos.contacto.trim()
-          if (v && !/^\d{4}-\d{4}$/.test(v)) {
+          if (v && !esTelefono(v)) {
             return 'El contacto debe ser un teléfono 8877-9955'
           }
           return undefined
@@ -461,12 +461,11 @@ export function App() {
                                   />
                                 )}
                                 {campo === 'contacto' && (
-                                  <Input
+                                  <TelefonoInput
                                     label="Teléfono (opcional)"
                                     value={datos.contacto}
                                     onChange={actualizar('contacto')}
                                     onBlur={() => tocar('contacto')}
-                                    placeholder="8877-9955"
                                     error={errorDe('contacto')}
                                   />
                                 )}
