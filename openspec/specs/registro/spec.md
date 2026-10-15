@@ -14,7 +14,7 @@ registrados y con QR disponible.
 El sistema SHALL permitir registrar a un participante a través de la API con `estadoPago = pendiente` cuando recibe un payload con `tipoRegistro = online`, **nombre, contacto opcional, correo opcional, localidad, region, edad, diasAsistencia, rol** y una referencia al comprobante de pago cargado. La `edad` SHALL ser un entero dentro del rango permitido para el `rol` enviado: 15 a 30 años para `joven`, y 15 a 99 años para `encargado` y `nexo`. Los límites y el criterio por rol SHALL ser los mismos que aplican los formularios, con fuente única en `@convencion/shared-types`. Al completar el registro, el sistema SHALL generar un `participantId` único y devolverlo junto con el código QR del participante. **Cualquier edad fuera del rango permitido SHALL rechazarse con 400 y el mensaje `Edad no permitida`.**
 
 #### Scenario: Registro online exitoso
-- **WHEN** se envía un registro con `tipoRegistro = online`, nombre y apellido (sin números), **contacto opcional** (correo válido o teléfono `8877-9955`), correo opcional válido, **localidad no vacía, region en `'1'`–`'13'`, edad entera dentro del rango del rol, diasAsistencia array con ≥1 valor de `{jueves-24, viernes-25, sabado-26, domingo-27}`, rol en `{joven, encargado, nexo}`**, y `comprobante.s3Key` válido
+- **WHEN** se envía un registro con `tipoRegistro = online`, nombre y apellido (sin números), **contacto opcional (teléfono `8877-9955`)**, correo opcional válido, **localidad no vacía, region en `'1'`–`'13'`, edad entera dentro del rango del rol, diasAsistencia array con ≥1 valor de `{jueves-24, viernes-25, sabado-26, domingo-27}`, rol en `{joven, encargado, nexo}`**, y `comprobante.s3Key` válido
 - **THEN** el sistema crea el participante con `estadoPago = pendiente` y `tipoRegistro = online`
 - **AND** el sistema genera un `participantId` único y lo devuelve en la respuesta con `codigoQr`
 - **AND** el participante queda recuperable por su `participantId`
@@ -185,7 +185,7 @@ banda junto con el QR.
 ### Requirement: Validación de datos del registro
 
 
-El sistema SHALL validar los datos obligatorios del registro y rechazar con un error 400 cualquier solicitud incompleta o inválida, devolviendo un mensaje que indique el problema. **Los campos obligatorios ahora son: nombre, localidad, region, edad, diasAsistencia, rol. El campo contacto es opcional.**
+El sistema SHALL validar los datos obligatorios del registro y rechazar con un error 400 cualquier solicitud incompleta o inválida, devolviendo un mensaje que indique el problema. **Los campos obligatorios ahora son: nombre, localidad, region, edad, diasAsistencia, rol. El campo contacto es opcional.** El campo `contacto` SHALL aceptar únicamente un teléfono con formato `8877-9955` — o sus 8 dígitos sin guion, que el sistema SHALL normalizar a `dddd-dddd` antes de persistir — y el correo SHALL validarse únicamente en el campo `correo`. **Los patrones y la normalización de teléfono/correo tienen fuente única en `@convencion/shared-types`.**
 
 #### Scenario: Registro sin nombre
 - **WHEN** se envía un registro sin nombre
@@ -216,8 +216,12 @@ El sistema SHALL validar los datos obligatorios del registro y rechazar con un e
 - **THEN** el sistema **ACEPTA la solicitud** (contacto ahora es opcional)
 
 #### Scenario: Registro con contacto que no es teléfono 8877-9955 ni correo
-- **WHEN** se envía un registro cuyo contacto no es un teléfono con formato `8877-9955` ni un correo válido
-- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto debe ser un teléfono 8877-9955 o un correo válido
+- **WHEN** se envía un registro cuyo contacto no es un teléfono con formato `8877-9955` (incluido un correo, que no pertenece a este campo)
+- **THEN** el sistema rechaza la solicitud con un error 400 indicando que el contacto debe ser un teléfono 8877-9955
+
+#### Scenario: Registro con contacto de 8 dígitos sin guion
+- **WHEN** se envía un registro con `contacto` = `88779955`
+- **THEN** el sistema acepta la solicitud y guarda el contacto normalizado como `8877-9955`
 
 #### Scenario: Registro con nombre que contiene números
 - **WHEN** se envía un registro cuyo nombre contiene números

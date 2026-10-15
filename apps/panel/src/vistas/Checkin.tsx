@@ -294,11 +294,11 @@ export function VistaCheckin() {
     async (resumen: ResumenParticipante) => {
       const equipo = await decidirEquipoParaLlegada(resumen.equipoColor)
       if (!equipo) {
-        await registrarLlegada(resumen)
+        setErrorLocal('No se pudo determinar un equipo para la llegada. Intenta de nuevo.')
         return
       }
       // Pago pendiente o rechazado: el staff confirma que la banda se entrega y
-      // el participante ocupa el equipo; si omite, se registra sin equipo.
+      // el participante ocupa el equipo; cancelar no registra la llegada.
       if (resumen.estadoPago !== 'pagado') {
         setConfirmacion({ resumen, equipo })
         return
@@ -353,13 +353,6 @@ export function VistaCheckin() {
               {procesandoId === confirmacion.resumen.participantId
                 ? 'Registrando…'
                 : 'Asignar y registrar'}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={procesandoId !== null}
-              onClick={() => void registrarLlegada(confirmacion.resumen)}
-            >
-              Registrar sin equipo
             </Button>
             <Button
               variant="outline"
